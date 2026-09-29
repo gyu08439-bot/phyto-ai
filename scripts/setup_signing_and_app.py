@@ -120,22 +120,155 @@ if not selected_bundle_id:
 print(f"Target Bundle ID: {selected_bundle_id}")
 
 print("\n--- STEP 3: App Store Connect App Record ---")
+app_exists = False
+target_app_id = None
+
+# Query apps by bundle ID filter first
 status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]={selected_bundle_id}")
-if status == 200 and res.get("data") and len(res["data"]) > 0:
-    print(f"App already exists: {res['data'][0]['attributes']['name']}")
-else:
-    for app_name in ["Flora AI: Plant Doctor", "Flora AI - Plant Disease Doctor", "Flora AI Plant Care & Doctor", f"Flora AI Doctor {int(time.time()) % 1000}"]:
-        app_payload = {
+if status == 200 and isinstance(res, dict) and res.get("data"):
+    for a in res["data"]:
+        if a.get("attributes", {}).get("bundleId") == selected_bundle_id:
+            target_app_id = a.get("id")
+            app_name = a.get("attributes", {}).get("name")
+            print(f"✓ Found existing App Store Connect record: '{app_name}' (ID: {target_app_id})")
+            app_exists = True
+            break
+
+# If not found via filter, fetch all apps list (up to 100) to check
+if not app_exists:
+    status_all, res_all = api_request("https://api.appstoreconnect.apple.com/v1/apps?limit=100")
+    if status_all == 200 and isinstance(res_all, dict) and res_all.get("data"):
+        for a in res_all["data"]:
+            if a.get("attributes", {}).get("bundleId") == selected_bundle_id:
+                target_app_id = a.get("id")
+                app_name = a.get("attributes", {}).get("name")
+                print(f"✓ Found existing App Store Connect record via list: '{app_name}' (ID: {target_app_id})")
+                app_exists = True
+                break
+
+if not app_exists:
+    app_name_candidates = [
+        "Flora AI: Plant Doctor",
+        "Flora AI - Plant Disease Doctor",
+        "Flora AI Plant Care & Doctor",
+        "Flora AI: Leaf Doctor & Care",
+        f"Flora AI Doctor {int(time.time()) % 1000}"
+    ]
+    for app_name in app_name_candidates:
+        sku = f"FLORA_{int(time.time())}"
+        print(f"\nAttempting to register App record: '{app_name}' (bundleId='{selected_bundle_id}', sku='{sku}')...")
+        
+        # Format 1: Official App Store Connect JSON:API Compound Document (Fastlane Spaceship standard)
+        compound_payload = {
             "data": {
                 "type": "apps",
-                "attributes": {"name": app_name, "sku": f"FLORA_AI_{int(time.time())}", "primaryLocale": "en-US"},
-                "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bundle_obj_id}}}
+                "attributes": {
+                    "sku": sku,
+                    "primaryLocale": "en-US",
+                    "bundleId": selected_bundle_id
+                },
+                "relationships": {
+                    "appStoreVersions": {
+                        "data": [{"type": "appStoreVersions", "id": "${store-version-IOS}"}]
+                    },
+                    "appInfos": {
+                        "data": [{"type": "appInfos", "id": "${new-appInfo-id}"}]
+                    }
+                }
+            },
+            "included": [
+                {
+                    "type": "appInfos",
+                    "id": "${new-appInfo-id}",
+                    "relationships": {
+                        "appInfoLocalizations": {
+                            "data": [{"type": "appInfoLocalizations", "id": "${new-appInfoLocalization-id}"}]
+                        }
+                    }
+                },
+                {
+                    "type": "appInfoLocalizations",
+                    "id": "${new-appInfoLocalization-id}",
+                    "attributes": {
+                        "locale": "en-US",
+                        "name": app_name
+                    }
+                },
+                {
+                    "type": "appStoreVersions",
+                    "id": "${store-version-IOS}",
+                    "attributes": {
+                        "platform": "IOS",
+                        "versionString": "1.0.0"
+                    },
+                    "relationships": {
+                        "appStoreVersionLocalizations": {
+                            "data": [{"type": "appStoreVersionLocalizations", "id": "${new-IOSVersionLocalization-id}"}]
+                        }
+                    }
+                },
+                {
+                    "type": "appStoreVersionLocalizations",
+                    "id": "${new-IOSVersionLocalization-id}",
+                    "attributes": {
+                        "locale": "en-US"
+                    }
+                }
+            ]
+        }
+        status, res = api_request("https://api.appstoreconnect.apple.com/v1/apps", compound_payload)
+        print(f"  Compound payload response ({status}): {res}")
+        if status in (200, 201) and res.get("data"):
+            target_app_id = res["data"]["id"]
+            print(f"✓ Successfully created App record: '{app_name}' (ID: {target_app_id})")
+            app_exists = True
+            break
+            
+        # Format 2: Direct attributes document
+        simple_payload = {
+            "data": {
+                "type": "apps",
+                "attributes": {
+                    "name": app_name,
+                    "bundleId": selected_bundle_id,
+                    "sku": sku,
+                    "primaryLocale": "en-US"
+                }
             }
         }
-        status, res = api_request("https://api.appstoreconnect.apple.com/v1/apps", app_payload)
-        if status in (200, 201) and res.get("data"):
-            print(f"Successfully created App record: {app_name}")
+        status_s, res_s = api_request("https://api.appstoreconnect.apple.com/v1/apps", simple_payload)
+        print(f"  Simple payload response ({status_s}): {res_s}")
+        if status_s in (200, 201) and res_s.get("data"):
+            target_app_id = res_s["data"]["id"]
+            print(f"✓ Successfully created App record (simple): '{app_name}' (ID: {target_app_id})")
+            app_exists = True
             break
+
+        # Format 3: BundleId relationship
+        rel_payload = {
+            "data": {
+                "type": "apps",
+                "attributes": {
+                    "name": app_name,
+                    "sku": sku,
+                    "primaryLocale": "en-US"
+                },
+                "relationships": {
+                    "bundleId": {"data": {"type": "bundleIds", "id": bundle_obj_id}}
+                }
+            }
+        }
+        status_r, res_r = api_request("https://api.appstoreconnect.apple.com/v1/apps", rel_payload)
+        print(f"  Relationship payload response ({status_r}): {res_r}")
+        if status_r in (200, 201) and res_r.get("data"):
+            target_app_id = res_r["data"]["id"]
+            print(f"✓ Successfully created App record (relationship): '{app_name}' (ID: {target_app_id})")
+            app_exists = True
+            break
+
+if not app_exists:
+    print("❌ ERROR: Could not create or find an App record in App Store Connect for", selected_bundle_id)
+    sys.exit(1)
 
 print("\n--- STEP 4: Apple Distribution Certificate ---")
 status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION")
