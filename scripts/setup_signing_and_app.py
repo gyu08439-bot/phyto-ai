@@ -183,16 +183,28 @@ if status in (200, 201) and res.get("data"):
     cert_id = cert_data["id"]
     cert_der = base64.b64decode(cert_data["attributes"]["certificateContent"])
     cert_obj = x509.load_der_x509_certificate(cert_der)
-    p12_bytes = pkcs12.serialize_key_and_certificates(
-        name=b"Apple Distribution",
-        key=key,
-        cert=cert_obj,
-        cas=None,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-    with open(p12_path, "wb") as pf:
-        pf.write(p12_bytes)
-    print(f"Saved Apple Distribution identity to {p12_path} (Cert ID: {cert_id})")
+    
+    # Save raw private key and certificate files
+    key_pem_path = os.path.abspath("build/private_key.pem")
+    cert_cer_path = os.path.abspath("build/cert.cer")
+    cert_pem_path = os.path.abspath("build/cert.pem")
+    
+    with open(key_pem_path, "wb") as pf:
+        pf.write(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()))
+    with open(cert_cer_path, "wb") as pf:
+        pf.write(cert_der)
+    with open(cert_pem_path, "wb") as pf:
+        pf.write(cert_obj.public_bytes(serialization.Encoding.PEM))
+    
+    # Generate PKCS#12 bundle using OpenSSL -legacy for 100% macOS Keychain compatibility
+    try:
+        subprocess.run(["openssl", "pkcs12", "-export", "-legacy", "-out", p12_path, "-inkey", key_pem_path, "-in", cert_pem_path, "-passout", "pass:actions_password"], check=True)
+        print(f"Generated legacy PKCS#12 identity via OpenSSL: {p12_path}")
+    except Exception as e:
+        print(f"OpenSSL -legacy export note: {e}")
+        subprocess.run(["openssl", "pkcs12", "-export", "-out", p12_path, "-inkey", key_pem_path, "-in", cert_pem_path, "-passout", "pass:actions_password"], check=False)
+
+    print(f"Saved Apple Distribution identity (Cert ID: {cert_id})")
 
     if sys.platform == "darwin":
         subprocess.run(["security", "create-keychain", "-p", "actions_password", "build.keychain"], check=False)
@@ -200,7 +212,7 @@ if status in (200, 201) and res.get("data"):
         subprocess.run(["security", "unlock-keychain", "-p", "actions_password", "build.keychain"], check=False)
         subprocess.run(["security", "set-keychain-settings", "-t", "3600", "-u", "build.keychain"], check=False)
         
-        # Download and import Apple WWDR intermediate certificates via curl
+        # Download and import Apple WWDR intermediate certificates
         for wwdr_url, fname in [
             ("https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer", "AppleWWDRCAG3.cer"),
             ("https://developer.apple.com/certificationauthority/AppleWWDRCA.cer", "AppleWWDRCA.cer")
@@ -215,10 +227,12 @@ if status in (200, 201) and res.get("data"):
         if "build.keychain" not in cur_kcs:
             subprocess.run(["security", "list-keychains", "-d", "user", "-s", "build.keychain"] + cur_kcs, check=False)
 
-        # Import p12 into build.keychain with -A flag and empty password
-        subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "", "-A", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
+        # Import private key PEM and certificate into build.keychain
+        subprocess.run(["security", "import", key_pem_path, "-k", "build.keychain", "-P", "", "-A", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
+        subprocess.run(["security", "import", cert_cer_path, "-k", "build.keychain", "-A"], check=False)
+        subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "actions_password", "-A", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
         subprocess.run(["security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", "actions_password", "build.keychain"], check=False)
-        print("✓ Imported certificate into macOS build keychain")
+        print("✓ Imported certificate & key into macOS build keychain")
         subprocess.run(["security", "find-identity", "-v", "-p", "codesigning", "build.keychain"])
 else:
     print(f"❌ Failed to create certificate: {res}")
