@@ -63,7 +63,10 @@ def api_request(url, data=None, method=None):
     req = urllib.request.Request(url, data=body, headers=req_headers, method=method)
     try:
         with urllib.request.urlopen(req) as resp:
-            return resp.status, json.loads(resp.read().decode("utf-8"))
+            raw_resp = resp.read().decode("utf-8")
+            if not raw_resp.strip():
+                return resp.status, {}
+            return resp.status, json.loads(raw_resp)
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8")
         try:
@@ -181,11 +184,11 @@ if status in (200, 201) and res.get("data"):
     cert_der = base64.b64decode(cert_data["attributes"]["certificateContent"])
     cert_obj = x509.load_der_x509_certificate(cert_der)
     p12_bytes = pkcs12.serialize_key_and_certificates(
-        name=b"Apple Distribution: Flora AI",
+        name=b"Apple Distribution",
         key=key,
         cert=cert_obj,
         cas=None,
-        encryption_algorithm=serialization.BestAvailableEncryption(b"actions_password")
+        encryption_algorithm=serialization.NoEncryption()
     )
     with open(p12_path, "wb") as pf:
         pf.write(p12_bytes)
@@ -197,17 +200,14 @@ if status in (200, 201) and res.get("data"):
         subprocess.run(["security", "unlock-keychain", "-p", "actions_password", "build.keychain"], check=False)
         subprocess.run(["security", "set-keychain-settings", "-t", "3600", "-u", "build.keychain"], check=False)
         
-        # Download and import Apple WWDR intermediate certificates
+        # Download and import Apple WWDR intermediate certificates via curl
         for wwdr_url, fname in [
             ("https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer", "AppleWWDRCAG3.cer"),
-            ("https://www.apple.com/certificateauthority/AppleWWDRCA.cer", "AppleWWDRCA.cer")
+            ("https://developer.apple.com/certificationauthority/AppleWWDRCA.cer", "AppleWWDRCA.cer")
         ]:
-            try:
-                fpath = os.path.join("build", fname)
-                urllib.request.urlretrieve(wwdr_url, fpath)
-                subprocess.run(["security", "import", fpath, "-k", "build.keychain"], check=False)
-            except Exception as e:
-                print(f"WWDR download note: {e}")
+            fpath = os.path.join("build", fname)
+            subprocess.run(["curl", "-s", "-L", "-o", fpath, wwdr_url], check=False)
+            subprocess.run(["security", "import", fpath, "-k", "build.keychain"], check=False)
 
         # Add build.keychain to keychain search list
         res_kc = subprocess.run(["security", "list-keychains", "-d", "user"], capture_output=True, text=True)
@@ -215,8 +215,8 @@ if status in (200, 201) and res.get("data"):
         if "build.keychain" not in cur_kcs:
             subprocess.run(["security", "list-keychains", "-d", "user", "-s", "build.keychain"] + cur_kcs, check=False)
 
-        # Import p12 into build.keychain
-        subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "actions_password", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
+        # Import p12 into build.keychain with -A flag and empty password
+        subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "", "-A", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
         subprocess.run(["security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", "actions_password", "build.keychain"], check=False)
         print("✓ Imported certificate into macOS build keychain")
         subprocess.run(["security", "find-identity", "-v", "-p", "codesigning", "build.keychain"])
