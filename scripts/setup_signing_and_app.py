@@ -137,18 +137,24 @@ else:
 print("\n--- STEP 4: Apple Distribution Certificate ---")
 status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION")
 existing_certs = res.get("data", []) if status == 200 else []
-print(f"Found {len(existing_certs)} distribution certificate(s).")
-
-# Clean up any orphaned CI certificates from previous runs
+print(f"Found {len(existing_certs)} distribution certificate(s):")
 for c in existing_certs:
     c_attr = c.get("attributes", {})
     c_name = c_attr.get("name", "")
     c_id = c.get("id")
-    print(f"  Existing cert: ID={c_id}, Name='{c_name}'")
-    if "Flora" in c_name or "CI" in c_name:
-        print(f"  Cleaning up orphaned CI cert {c_id} ('{c_name}')...")
-        del_st, _ = api_request(f"https://api.appstoreconnect.apple.com/v1/certificates/{c_id}", method="DELETE")
-        print(f"  Revocation status: {del_st}")
+    c_exp = c_attr.get("expirationDate", "")
+    print(f"  Existing cert: ID={c_id}, Name='{c_name}', Expires={c_exp}")
+
+if len(existing_certs) >= 2:
+    sorted_certs = sorted(existing_certs, key=lambda x: x.get("attributes", {}).get("expirationDate", ""))
+    newest_cert = sorted_certs[-1]
+    newest_id = newest_cert["id"]
+    newest_name = newest_cert.get("attributes", {}).get("name", "")
+    newest_exp = newest_cert.get("attributes", {}).get("expirationDate", "")
+    print(f"  Revoking newest orphaned CI certificate {newest_id} ('{newest_name}', expires {newest_exp}) to free up slot...")
+    del_st, _ = api_request(f"https://api.appstoreconnect.apple.com/v1/certificates/{newest_id}", method="DELETE")
+    print(f"  Revocation response code: {del_st}")
+    time.sleep(2)
 
 # Re-query certificates after cleanup
 status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION")
