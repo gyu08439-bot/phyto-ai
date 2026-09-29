@@ -28,7 +28,7 @@ KEY_ID = os.environ.get("APP_STORE_CONNECT_KEY_ID")
 ISSUER_ID = os.environ.get("APP_STORE_CONNECT_ISSUER_ID")
 KEY_CONTENT = os.environ.get("APP_STORE_CONNECT_API_KEY_CONTENT")
 TEAM_ID = os.environ.get("APPLE_TEAM_ID")
-BUILD_NUMBER = str(int(time.time()))
+BUILD_NUMBER = str(int(time.time()) - 1700000000)
 
 if not KEY_ID or not ISSUER_ID or not KEY_CONTENT:
     print("Error: Missing App Store Connect API credentials")

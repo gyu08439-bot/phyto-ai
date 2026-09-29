@@ -8,16 +8,16 @@ on:
 jobs:
   testflight:
     name: Build & Upload to TestFlight
-    runs-on: macos-14
+    runs-on: macos-26
     timeout-minutes: 45
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16 (iOS 18 SDK)
+      - name: Select Xcode 26
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | tail -n 1)
+          XCODE_PATH=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | tail -n 1)
           if [ -n "$XCODE_PATH" ]; then
             echo "Switching to $XCODE_PATH..."
             sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
@@ -81,11 +81,6 @@ jobs:
             OTHER_CODE_SIGN_FLAGS="--keychain build.keychain" \
             -destination "generic/platform=iOS"
 
-      - name: Patch SDK & Xcode Version and Re-sign for Apple Ingestion
-        run: |
-          python3 scripts/patch_sdk_version.py build/Flora.xcarchive/Products/Applications/App.app
-          codesign --verify --deep --strict --verbose=2 build/Flora.xcarchive/Products/Applications/App.app
-
       - name: Export IPA
         run: |
           xcodebuild -exportArchive \
@@ -123,6 +118,16 @@ jobs:
             exit $ALTOOL_EXIT
           fi
 
+      - name: Verify Build in App Store Connect
+        if: always()
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          sleep 10
+          python3 scripts/check_app_builds.py || true
+
       - name: Upload IPA Artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -130,3 +135,4 @@ jobs:
           name: Flora-AI-TestFlight-IPA
           path: build/output/*.ipa
           if-no-files-found: warn
+
