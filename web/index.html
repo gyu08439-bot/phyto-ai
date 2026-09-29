@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Flora AI — Plant Doctor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- 1. ONBOARDING SCREEN -->
+    <section id="screen-quiz" class="screen active">
+      <div class="screen-header">
+        <div class="brand">FLORA<span class="text-emerald">AI</span></div>
+        <div class="stepper-dots">
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+        </div>
+      </div>
+
+      <div class="quiz-content">
+        <h1 id="quiz-question-title" class="title-large">How many plants are in your home?</h1>
+        <p id="quiz-question-subtitle" class="subtitle">Flora AI tailors care alerts and watering calendars to your space.</p>
+        <div id="quiz-options-container" class="options-stack"></div>
+      </div>
+    </section>
+
+    <!-- 2. AI COMPUTING SCREEN -->
+    <section id="screen-computing" class="screen">
+      <div class="computing-center">
+        <div class="pulse-ring">
+          <div class="pulse-core"></div>
+        </div>
+        <div id="computing-percent" class="big-percent">0%</div>
+        <h2 class="title-medium">Calibrating AI Model</h2>
+        <p id="computation-step-text" class="subtitle">Scanning 45,000+ botanical profiles...</p>
+      </div>
+    </section>
+
+    <!-- 3. PAYWALL SCREEN -->
+    <section id="screen-paywall" class="screen">
+      <div class="paywall-top">
+        <button id="paywall-close-btn" class="btn-close">✕</button>
+        <div class="tag-pill">PRO ACCESS</div>
+        <h1 class="title-large">Never kill another plant.</h1>
+        <p class="subtitle">Instant disease diagnosis, camera luxmeter, and watering intelligence.</p>
+      </div>
+
+      <div class="paywall-plans">
+        <div id="plan-yearly" class="plan-card active">
+          <div class="badge-save">SAVE 70%</div>
+          <div class="plan-info">
+            <div class="plan-title">Annual Plan</div>
+            <div class="plan-sub">$0.77 / week</div>
+          </div>
+          <div class="plan-total">$39.99/yr</div>
+        </div>
+
+        <div id="plan-weekly" class="plan-card">
+          <div class="plan-info">
+            <div class="plan-title">Weekly Plan</div>
+            <div class="plan-sub">Billed weekly</div>
+          </div>
+          <div class="plan-total">$4.99/wk</div>
+        </div>
+      </div>
+
+      <div class="paywall-footer">
+        <button id="paywall-cta-btn" class="btn-primary">
+          <span>Start 3-Day Free Trial</span>
+        </button>
+        <div class="trial-note">No commitment. Cancel anytime in App Store.</div>
+        <div class="legal-row">
+          <a href="#">Terms</a> • <a href="#">Privacy</a> • <a href="#" id="paywall-restore-btn">Restore</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. GARDEN DASHBOARD SCREEN -->
+    <section id="screen-dashboard" class="screen">
+      <div class="dashboard-top">
+        <div>
+          <div class="date-label">MY COLLECTION</div>
+          <h1 class="title-large">My Garden</h1>
+        </div>
+        <button id="btn-open-add-plant" class="btn-add-circle">+</button>
+      </div>
+
+      <!-- Hero Health Card -->
+      <div class="hero-vitality-card">
+        <div class="vitality-left">
+          <div id="garden-vitality-score" class="vitality-number">88%</div>
+          <div class="vitality-text">Garden Health Score</div>
+        </div>
+        <div id="garden-count-badge" class="vitality-badge">3 Plants</div>
+      </div>
+
+      <!-- Segmented Filter -->
+      <div class="segmented-control">
+        <button class="segment-btn active" data-filter="all">All</button>
+        <button class="segment-btn" data-filter="water">💧 Needs Water</button>
+        <button class="segment-btn" data-filter="treatment">⚠️ Attention</button>
+      </div>
+
+      <!-- Plant List -->
+      <div id="garden-plants-list" class="plants-stack"></div>
+    </section>
+
+    <!-- 5. CAMERA SCANNER SCREEN -->
+    <section id="screen-scanner" class="screen">
+      <div class="scanner-top">
+        <button id="back-from-scanner" class="btn-back">← Back</button>
+        <div class="screen-title">AI Leaf Doctor</div>
+        <div style="width: 44px;"></div>
+      </div>
+
+      <div class="camera-card" id="camera-card-tap">
+        <video id="camera-feed" playsinline webkit-playsinline autoplay muted class="camera-stream"></video>
+        <img id="camera-preview" class="camera-stream" style="display: none; object-fit: cover;" alt="Leaf Preview">
+        <div class="camera-reticle">
+          <div class="reticle-corner tl"></div>
+          <div class="reticle-corner tr"></div>
+          <div class="reticle-corner bl"></div>
+          <div class="reticle-corner br"></div>
+          <div id="scanner-laser" class="reticle-laser" style="display: none;"></div>
+        </div>
+        <div id="camera-tap-hint" class="camera-tap-prompt">📷 Tap to Open Camera / Photo</div>
+        <div id="scan-status-text" class="camera-status" style="display: none;">Point camera at affected leaf</div>
+      </div>
+
+      <div class="scanner-bottom">
+        <input type="file" id="plant-photo-input" accept="image/*" capture="environment" style="display: none;">
+        <button id="btn-capture-scan" class="btn-shutter">
+          <div class="shutter-inner"></div>
+        </button>
+        <div class="shutter-hint">Tap to scan or choose photo</div>
+
+        <div class="demo-pills-wrap">
+          <div class="demo-label">Instant Demos:</div>
+          <div class="demo-pills">
+            <button class="preset-chip" data-id="monstera">🪴 Monstera</button>
+            <button class="preset-chip" data-id="ficus_elastica">🌳 Ficus</button>
+            <button class="preset-chip" data-id="snake_plant">🗡️ Snake</button>
+            <button class="preset-chip" data-id="calathea_orbifolia">🌿 Calathea</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. DIAGNOSIS SCREEN -->
+    <section id="screen-diagnosis" class="screen">
+      <div class="scanner-top">
+        <button id="back-from-diagnosis" class="btn-back">← Back</button>
+        <div class="screen-title">Medical Report</div>
+        <div style="width: 44px;"></div>
+      </div>
+
+      <div class="diag-container">
+        <div class="diag-header-card">
+          <div class="diag-names">
+            <h1 id="diag-plant-name" class="diag-title">Monstera Deliciosa</h1>
+            <div id="diag-botanical-name" class="diag-sub">Monstera deliciosa</div>
+          </div>
+          <div class="diag-score-circle">
+            <span id="diag-health-number">72%</span>
+            <span class="circle-label">Vitality</span>
+          </div>
+        </div>
+
+        <div id="diag-pet-alert" class="diag-pill-alert safe">
+          🐾 <strong>Pet-Safe:</strong> Non-toxic to cats & dogs.
+        </div>
+
+        <div class="diag-card">
+          <div class="card-caption">DIAGNOSIS</div>
+          <h2 id="diag-condition-title" class="diag-condition">Leaf Rust (Puccinia)</h2>
+          <p id="diag-cause-desc" class="diag-desc">Excess foliage moisture combined with poor ventilation.</p>
+        </div>
+
+        <div class="diag-card">
+          <div class="card-caption">TREATMENT PROTOCOL</div>
+          <div id="diag-rx-steps" class="rx-stack"></div>
+        </div>
+
+        <button id="add-to-garden-btn" class="btn-primary" style="margin-top: 10px; margin-bottom: 30px;">
+          <span>+ Add to My Garden</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 7. LUXMETER SCREEN -->
+    <section id="screen-luxmeter" class="screen">
+      <div class="dashboard-top">
+        <div>
+          <div class="date-label">WINDOW CALIBRATION</div>
+          <h1 class="title-large">Light Meter</h1>
+        </div>
+      </div>
+
+      <div class="lux-display-card">
+        <div id="lux-value-display" class="lux-giant-number">0 LUX</div>
+        <div id="lux-zone-badge" class="lux-pill">Calibrating...</div>
+        <p id="lux-zone-desc" class="lux-explanation">Point phone camera towards the plant spot.</p>
+      </div>
+
+      <div class="lux-camera-window">
+        <video id="lux-video-stream" playsinline autoplay muted class="lux-video"></video>
+      </div>
+
+      <button id="lux-start-btn" class="btn-secondary" style="margin-top: 16px;">
+        <span>Start Camera Meter</span>
+      </button>
+
+      <div class="lux-recs-wrap">
+        <div class="card-caption" style="margin-top: 24px; margin-bottom: 12px;">PERFECT FOR THIS LIGHT</div>
+        <div id="lux-recommended-plants" class="lux-plants-row"></div>
+      </div>
+    </section>
+
+    <!-- 8. MODAL: ADD PLANT -->
+    <div id="modal-add-plant" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2 class="title-medium">+ Add Plant</h2>
+          <button id="btn-close-add-modal" class="btn-close-sm">✕</button>
+        </div>
+        <div class="modal-fields">
+          <label class="field-label">Plant Nickname</label>
+          <input type="text" id="add-plant-nickname" class="input-large" placeholder="e.g. Sunny Monstera">
+
+          <label class="field-label" style="margin-top: 16px;">Select Species</label>
+          <select id="add-plant-species" class="select-large"></select>
+
+          <button id="btn-save-new-plant" class="btn-primary" style="margin-top: 24px;">
+            <span>Save Plant</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NATIVE BOTTOM TAB BAR -->
+    <nav id="bottom-tab-bar" class="tab-bar" style="display: none;">
+      <button class="tab-item active" data-target="dashboard">
+        <span class="tab-icon">🪴</span>
+        <span class="tab-text">Garden</span>
+      </button>
+      <button class="tab-item" data-target="scanner">
+        <span class="tab-icon">📷</span>
+        <span class="tab-text">Scan</span>
+      </button>
+      <button class="tab-item" data-target="luxmeter">
+        <span class="tab-icon">💡</span>
+        <span class="tab-text">Light</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

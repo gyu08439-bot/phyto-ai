@@ -1,0 +1,17 @@
+{
+  "appId": "com.flora.ai",
+  "appName": "Flora AI",
+  "webDir": "web",
+  "bundledWebRuntime": false,
+  "ios": {
+    "preferredContentMode": "mobile",
+    "contentInset": "always",
+    "scheme": "Flora AI",
+    "backgroundColor": "#000000"
+  },
+  "plugins": {
+    "Purchases": {
+      "apiKey": "appl_FloraAiProductionKey"
+    }
+  }
+}
