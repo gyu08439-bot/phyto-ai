@@ -43,71 +43,59 @@
       </div>
     </section>
 
-    <!-- 3. PAYWALL SCREEN -->
-    <section id="screen-paywall" class="screen">
-      <div class="paywall-hero-container">
-        <img src="assets/paywall_monstera.jpg" alt="Botanical Mastery" class="paywall-hero-img" />
-        <div class="paywall-hero-overlay"></div>
-        <button id="paywall-close-btn" class="paywall-close-btn" aria-label="Close">✕</button>
-        <div class="paywall-social-badge">
-          <span class="stars">★★★★★</span> 4.9 • 48,000+ Thriving Plants
+    <!-- 3. PAYWALL SCREEN (Native Apple HIG v4 Standard) -->
+    <section id="screen-paywall" class="screen internal-paywall-v4">
+      <div class="ipw-shell-v4">
+        <button id="paywall-close-btn" class="ipw-close-v4" aria-label="Close">×</button>
+        <div class="ipw-orb-v4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
         </div>
-      </div>
+        <div class="ipw-eyebrow-v4">Flora AI Pro Access</div>
+        <h2>Never kill another plant</h2>
+        <p>Unlimited AI pathology, instant cure dosages, and botanical light meter.</p>
 
-      <div class="paywall-body">
-        <div class="tag-pill">FLORA CARE+ VIP</div>
-        <h1 class="title-large">Clinical care for every leaf.</h1>
-        <p class="subtitle">Botanical pathology & recovery protocols powered by Llama 3.2 Vision.</p>
-
-        <div class="paywall-features">
-          <div class="feature-item">
-            <div class="feature-check">✓</div>
-            <div class="feature-text"><strong>Unlimited AI Diagnoses:</strong> Instant fungal, pest & nutrient scans</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-check">✓</div>
-            <div class="feature-text"><strong>3-Step Treatment Protocol:</strong> Exact cure dosages & recovery timeline</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-check">✓</div>
-            <div class="feature-text"><strong>Smart Camera Luxmeter:</strong> Calibrate window sunlight per species</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-check">✓</div>
-            <div class="feature-text"><strong>Pet Toxicity Radar:</strong> Certified safety checks for cats & dogs</div>
-          </div>
+        <div class="ipw-benefits-v4">
+          <div><span>✓</span> Unlimited leaf disease scans & pathogen ID</div>
+          <div><span>✓</span> 3-step clinical recovery protocols & dosages</div>
+          <div><span>✓</span> Camera luxmeter & species window calibration</div>
+          <div><span>✓</span> 24/7 toxic pet hazard radar for cats & dogs</div>
         </div>
 
-        <div class="paywall-plans">
-          <div id="plan-yearly" class="plan-card active">
-            <div class="badge-save">SAVE 75%</div>
-            <div class="plan-radio"></div>
-            <div class="plan-info">
-              <div class="plan-title">Annual Pass</div>
-              <div class="plan-sub">$2.49 / month ($29.99/year)</div>
-            </div>
-            <div class="plan-total">$29.99<span class="plan-unit">/yr</span></div>
-          </div>
-
-          <div id="plan-monthly" class="plan-card">
-            <div class="plan-radio"></div>
-            <div class="plan-info">
-              <div class="plan-title">Monthly Pass</div>
-              <div class="plan-sub">Billed monthly • Cancel anytime</div>
-            </div>
-            <div class="plan-total">$7.99<span class="plan-unit">/mo</span></div>
-          </div>
-        </div>
-
-        <div class="paywall-footer">
-          <button id="paywall-cta-btn" class="btn-primary">
-            <span>Start 3-Day Free Trial</span>
+        <div class="ipw-plan-list-v4">
+          <button type="button" class="ipw-plan-v4 selected" id="plan-yearly">
+            <span class="ipw-best-v4">BEST VALUE · SAVE 75%</span>
+            <span class="ipw-radio-v4"></span>
+            <span class="ipw-plan-copy-v4">
+              <b>Annual Pass</b>
+              <small>Billed annually · $2.49 / month</small>
+            </span>
+            <span class="ipw-price-v4">
+              <b>$29.99</b>
+              <small>per year</small>
+            </span>
           </button>
-          <div id="paywall-trial-note" class="trial-note">3 days free, then $29.99/year. Cancel anytime in App Store.</div>
-          <div class="legal-row">
-            <a href="#">Terms of Use</a> • <a href="#">Privacy Policy</a> • <a href="#" id="paywall-restore-btn">Restore Purchases</a>
-          </div>
+
+          <button type="button" class="ipw-plan-v4" id="plan-monthly">
+            <span class="ipw-radio-v4"></span>
+            <span class="ipw-plan-copy-v4">
+              <b>Monthly Pass</b>
+              <small>Flexible access · Cancel anytime</small>
+            </span>
+            <span class="ipw-price-v4">
+              <b>$7.99</b>
+              <small>per month</small>
+            </span>
+          </button>
         </div>
+
+        <button class="ipw-cta-v4" id="paywall-cta-btn">
+          <span>Start 3-Day Free Trial</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <button class="ipw-restore-v4" id="paywall-restore-btn">Restore Purchases</button>
+        <p class="ipw-legal-v4" id="paywall-trial-note">Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a></p>
       </div>
     </section>
 

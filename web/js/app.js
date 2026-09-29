@@ -215,12 +215,13 @@ class FloraApp {
     this.showScreen("paywall");
     const ctaBtn = document.getElementById("paywall-cta-btn");
     const trialNote = document.getElementById("paywall-trial-note");
+    const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
     if (this.selectedPlan === "yearly") {
-      if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
-      if (trialNote) trialNote.textContent = "3 days free, then $29.99/year. Cancel anytime in App Store.";
+      if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
     } else {
-      if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>`;
-      if (trialNote) trialNote.textContent = "Billed monthly ($7.99/mo). Cancel anytime in App Store.";
+      if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
     }
   }
 
@@ -231,22 +232,23 @@ class FloraApp {
     const closeBtn = document.getElementById("paywall-close-btn");
     const restoreBtn = document.getElementById("paywall-restore-btn");
     const trialNote = document.getElementById("paywall-trial-note");
+    const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
 
     if (yearlyCard && monthlyCard) {
       yearlyCard.addEventListener("click", () => {
-        yearlyCard.classList.add("active");
-        monthlyCard.classList.remove("active");
+        yearlyCard.classList.add("selected", "active");
+        monthlyCard.classList.remove("selected", "active");
         this.selectedPlan = "yearly";
-        if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
-        if (trialNote) trialNote.textContent = "3 days free, then $29.99/year. Cancel anytime in App Store.";
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
       });
 
       monthlyCard.addEventListener("click", () => {
-        monthlyCard.classList.add("active");
-        yearlyCard.classList.remove("active");
+        monthlyCard.classList.add("selected", "active");
+        yearlyCard.classList.remove("selected", "active");
         this.selectedPlan = "monthly";
-        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>`;
-        if (trialNote) trialNote.textContent = "Billed monthly ($7.99/mo). Cancel anytime in App Store.";
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
       });
     }
 
@@ -265,17 +267,15 @@ class FloraApp {
               }
             }, 600);
           } else {
-            if (this.selectedPlan === "yearly") {
-              ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
-            } else {
-              ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>`;
-            }
+            ctaBtn.innerHTML = this.selectedPlan === "yearly"
+              ? `<span>Start 3-Day Free Trial</span>${arrowSvg}`
+              : `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
           }
         } catch (e) {
           console.error("Purchase error:", e);
           ctaBtn.innerHTML = this.selectedPlan === "yearly"
-            ? `<span>Start 3-Day Free Trial</span>`
-            : `<span>Subscribe for $7.99 / mo</span>`;
+            ? `<span>Start 3-Day Free Trial</span>${arrowSvg}`
+            : `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
         }
       });
     }
