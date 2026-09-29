@@ -1,11 +1,12 @@
 
 import { PLANT_DATABASE } from "./data.js";
 
-const WORKER_AI_ENDPOINT = "https://flora-ai-backend.maks200r1.workers.dev/api/diagnose";
+const WORKER_AI_ENDPOINT = "https://flora-ai-backend.godshopmod.workers.dev/api/diagnose";
 
 export class PlantScanner {
   constructor(options = {}) {
     this.onDiagnosisReady = options.onDiagnosisReady || (() => {});
+    this.beforeScan = options.beforeScan || (() => true);
     this.cameraFeed = document.getElementById("camera-feed");
     this.cameraPreview = document.getElementById("camera-preview");
     this.cameraCard = document.getElementById("camera-card-tap");
@@ -24,6 +25,7 @@ export class PlantScanner {
 
   init() {
     const openCameraPicker = () => {
+      if (this.beforeScan && !this.beforeScan()) return;
       if (this.photoInput) this.photoInput.click();
     };
 
@@ -51,6 +53,7 @@ export class PlantScanner {
 
     this.presetChips.forEach(chip => {
       chip.addEventListener("click", () => {
+        if (this.beforeScan && !this.beforeScan()) return;
         const presetId = chip.getAttribute("data-id");
         this.runPresetScan(presetId);
       });

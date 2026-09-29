@@ -45,39 +45,68 @@
 
     <!-- 3. PAYWALL SCREEN -->
     <section id="screen-paywall" class="screen">
-      <div class="paywall-top">
-        <button id="paywall-close-btn" class="btn-close">✕</button>
-        <div class="tag-pill">PRO ACCESS</div>
-        <h1 class="title-large">Never kill another plant.</h1>
-        <p class="subtitle">Instant disease diagnosis, camera luxmeter, and watering intelligence.</p>
-      </div>
-
-      <div class="paywall-plans">
-        <div id="plan-yearly" class="plan-card active">
-          <div class="badge-save">SAVE 70%</div>
-          <div class="plan-info">
-            <div class="plan-title">Annual Plan</div>
-            <div class="plan-sub">$0.77 / week</div>
-          </div>
-          <div class="plan-total">$39.99/yr</div>
-        </div>
-
-        <div id="plan-weekly" class="plan-card">
-          <div class="plan-info">
-            <div class="plan-title">Weekly Plan</div>
-            <div class="plan-sub">Billed weekly</div>
-          </div>
-          <div class="plan-total">$4.99/wk</div>
+      <div class="paywall-hero-container">
+        <img src="assets/paywall_monstera.jpg" alt="Botanical Mastery" class="paywall-hero-img" />
+        <div class="paywall-hero-overlay"></div>
+        <button id="paywall-close-btn" class="paywall-close-btn" aria-label="Close">✕</button>
+        <div class="paywall-social-badge">
+          <span class="stars">★★★★★</span> 4.9 • 48,000+ Thriving Plants
         </div>
       </div>
 
-      <div class="paywall-footer">
-        <button id="paywall-cta-btn" class="btn-primary">
-          <span>Start 3-Day Free Trial</span>
-        </button>
-        <div class="trial-note">No commitment. Cancel anytime in App Store.</div>
-        <div class="legal-row">
-          <a href="#">Terms</a> • <a href="#">Privacy</a> • <a href="#" id="paywall-restore-btn">Restore</a>
+      <div class="paywall-body">
+        <div class="tag-pill">FLORA CARE+ VIP</div>
+        <h1 class="title-large">Clinical care for every leaf.</h1>
+        <p class="subtitle">Botanical pathology & recovery protocols powered by Llama 3.2 Vision.</p>
+
+        <div class="paywall-features">
+          <div class="feature-item">
+            <div class="feature-check">✓</div>
+            <div class="feature-text"><strong>Unlimited AI Diagnoses:</strong> Instant fungal, pest & nutrient scans</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-check">✓</div>
+            <div class="feature-text"><strong>3-Step Treatment Protocol:</strong> Exact cure dosages & recovery timeline</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-check">✓</div>
+            <div class="feature-text"><strong>Smart Camera Luxmeter:</strong> Calibrate window sunlight per species</div>
+          </div>
+          <div class="feature-item">
+            <div class="feature-check">✓</div>
+            <div class="feature-text"><strong>Pet Toxicity Radar:</strong> Certified safety checks for cats & dogs</div>
+          </div>
+        </div>
+
+        <div class="paywall-plans">
+          <div id="plan-yearly" class="plan-card active">
+            <div class="badge-save">SAVE 75%</div>
+            <div class="plan-radio"></div>
+            <div class="plan-info">
+              <div class="plan-title">Annual Pass</div>
+              <div class="plan-sub">$2.49 / month ($29.99/year)</div>
+            </div>
+            <div class="plan-total">$29.99<span class="plan-unit">/yr</span></div>
+          </div>
+
+          <div id="plan-monthly" class="plan-card">
+            <div class="plan-radio"></div>
+            <div class="plan-info">
+              <div class="plan-title">Monthly Pass</div>
+              <div class="plan-sub">Billed monthly • Cancel anytime</div>
+            </div>
+            <div class="plan-total">$7.99<span class="plan-unit">/mo</span></div>
+          </div>
+        </div>
+
+        <div class="paywall-footer">
+          <button id="paywall-cta-btn" class="btn-primary">
+            <span>Start 3-Day Free Trial</span>
+          </button>
+          <div id="paywall-trial-note" class="trial-note">3 days free, then $29.99/year. Cancel anytime in App Store.</div>
+          <div class="legal-row">
+            <a href="#">Terms of Use</a> • <a href="#">Privacy Policy</a> • <a href="#" id="paywall-restore-btn">Restore Purchases</a>
+          </div>
         </div>
       </div>
     </section>
@@ -186,6 +215,18 @@
         <div class="diag-card">
           <div class="card-caption">TREATMENT PROTOCOL</div>
           <div id="diag-rx-steps" class="rx-stack"></div>
+
+          <div id="diag-pro-locked-banner" class="rx-locked-banner" style="display: none;">
+            <div class="rx-locked-top">
+              <span class="rx-lock-icon">🔒</span>
+              <span class="rx-locked-tag">PRO PROTOCOL</span>
+            </div>
+            <div class="rx-locked-title">Unlock Steps 2 & 3: Clinical Cure Plan</div>
+            <div class="rx-locked-desc">Immediate action, recovery timeline, and fungicide/fertilizer dosing guidelines are exclusive to Flora Pro.</div>
+            <button id="btn-unlock-rx-pro" class="btn-unlock-rx">
+              <span>⚡ Unlock Full Treatment Protocol</span>
+            </button>
+          </div>
         </div>
 
         <button id="add-to-garden-btn" class="btn-primary" style="margin-top: 10px; margin-bottom: 30px;">

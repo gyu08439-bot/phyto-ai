@@ -9,8 +9,8 @@ export class PurchasesManager {
     this.isNative = false;
     this.isPro = false;
     this.packages = [
-      { id: "flora_annual_3999", title: "Annual Care Pass", price: "$39.99", unit: "year", trialDays: 3 },
-      { id: "flora_weekly_499", title: "Flexible Weekly", price: "$4.99", unit: "week", trialDays: 0 }
+      { id: "flora_annual_2999", title: "Annual Recovery Pass", price: "$29.99", unit: "year", monthlyEquiv: "$2.49/mo" },
+      { id: "flora_monthly_799", title: "Monthly Flexible", price: "$7.99", unit: "month" }
     ];
     this.init();
   }
@@ -50,7 +50,7 @@ export class PurchasesManager {
   }
 
   async purchasePlan(planType = "yearly") {
-    const pkgId = planType === "yearly" ? "flora_annual_3999" : "flora_weekly_499";
+    const pkgId = planType === "yearly" ? "flora_annual_2999" : "flora_monthly_799";
 
     if (this.isNative && this.Purchases) {
       try {

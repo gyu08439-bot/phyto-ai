@@ -9,6 +9,8 @@ class FloraApp {
     this.quizStep = 0;
     this.selectedPlan = "yearly";
     this.gardenFilter = "all";
+    this.freeScansUsed = parseInt(localStorage.getItem("flora_free_scans_used") || "0", 10);
+    this.lastDiagnosedPlant = null;
 
     this.loadGarden();
     this.initElements();
@@ -209,43 +211,71 @@ class FloraApp {
     }, 45);
   }
 
+  showPaywall(reason = "") {
+    this.showScreen("paywall");
+    const ctaBtn = document.getElementById("paywall-cta-btn");
+    const trialNote = document.getElementById("paywall-trial-note");
+    if (this.selectedPlan === "yearly") {
+      if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
+      if (trialNote) trialNote.textContent = "3 days free, then $29.99/year. Cancel anytime in App Store.";
+    } else {
+      if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>`;
+      if (trialNote) trialNote.textContent = "Billed monthly ($7.99/mo). Cancel anytime in App Store.";
+    }
+  }
+
   initPaywall() {
     const yearlyCard = document.getElementById("plan-yearly");
-    const weeklyCard = document.getElementById("plan-weekly");
+    const monthlyCard = document.getElementById("plan-monthly");
     const ctaBtn = document.getElementById("paywall-cta-btn");
     const closeBtn = document.getElementById("paywall-close-btn");
     const restoreBtn = document.getElementById("paywall-restore-btn");
+    const trialNote = document.getElementById("paywall-trial-note");
 
-    if (yearlyCard && weeklyCard) {
+    if (yearlyCard && monthlyCard) {
       yearlyCard.addEventListener("click", () => {
         yearlyCard.classList.add("active");
-        weeklyCard.classList.remove("active");
+        monthlyCard.classList.remove("active");
         this.selectedPlan = "yearly";
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
+        if (trialNote) trialNote.textContent = "3 days free, then $29.99/year. Cancel anytime in App Store.";
       });
 
-      weeklyCard.addEventListener("click", () => {
-        weeklyCard.classList.add("active");
+      monthlyCard.addEventListener("click", () => {
+        monthlyCard.classList.add("active");
         yearlyCard.classList.remove("active");
-        this.selectedPlan = "weekly";
+        this.selectedPlan = "monthly";
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>`;
+        if (trialNote) trialNote.textContent = "Billed monthly ($7.99/mo). Cancel anytime in App Store.";
       });
     }
 
     if (ctaBtn) {
       ctaBtn.addEventListener("click", async () => {
-        ctaBtn.innerHTML = `<span>Connecting StoreKit...</span>`;
+        ctaBtn.innerHTML = `<span>Connecting Apple StoreKit...</span>`;
         try {
           const res = await purchasesManager.purchasePlan(this.selectedPlan);
           if (res.success) {
             ctaBtn.innerHTML = `<span>✓ Subscribed to Flora Pro</span>`;
             setTimeout(() => {
-              this.showScreen("dashboard");
+              if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+                this.renderDiagnosis(this.lastDiagnosedPlant);
+              } else {
+                this.showScreen("dashboard");
+              }
             }, 600);
           } else {
-            ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
+            if (this.selectedPlan === "yearly") {
+              ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
+            } else {
+              ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>`;
+            }
           }
         } catch (e) {
           console.error("Purchase error:", e);
-          ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>`;
+          ctaBtn.innerHTML = this.selectedPlan === "yearly"
+            ? `<span>Start 3-Day Free Trial</span>`
+            : `<span>Subscribe for $7.99 / mo</span>`;
         }
       });
     }
@@ -257,22 +287,45 @@ class FloraApp {
         const res = await purchasesManager.restorePurchases();
         if (res.restored) {
           alert("Success! Your Flora Pro subscription has been restored.");
-          this.showScreen("dashboard");
+          if (this.lastDiagnosedPlant) {
+            this.renderDiagnosis(this.lastDiagnosedPlant);
+          } else {
+            this.showScreen("dashboard");
+          }
         } else {
-          alert("No previous subscriptions found for this Apple ID.");
+          alert("No active Flora Pro subscription found for this Apple ID.");
         }
-        restoreBtn.textContent = "Restore";
+        restoreBtn.textContent = "Restore Purchases";
       });
     }
 
     if (closeBtn) {
-      closeBtn.addEventListener("click", () => this.showScreen("dashboard"));
+      closeBtn.addEventListener("click", () => {
+        if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+          this.renderDiagnosis(this.lastDiagnosedPlant);
+        } else {
+          this.showScreen("dashboard");
+        }
+      });
     }
   }
 
   initScanner() {
     this.scanner = new PlantScanner({
-      onDiagnosisReady: (plant) => this.renderDiagnosis(plant)
+      beforeScan: () => {
+        if (!purchasesManager.isPro && this.freeScansUsed >= 1) {
+          this.showPaywall("scanner_limit");
+          return false;
+        }
+        return true;
+      },
+      onDiagnosisReady: (plant) => {
+        if (!purchasesManager.isPro) {
+          this.freeScansUsed++;
+          localStorage.setItem("flora_free_scans_used", this.freeScansUsed);
+        }
+        this.renderDiagnosis(plant);
+      }
     });
 
     const backFromScan = document.getElementById("back-from-scanner");
@@ -283,6 +336,11 @@ class FloraApp {
     const backFromDiagnosis = document.getElementById("back-from-diagnosis");
     if (backFromDiagnosis) {
       backFromDiagnosis.addEventListener("click", () => this.showScreen("dashboard"));
+    }
+
+    const unlockRxBtn = document.getElementById("btn-unlock-rx-pro");
+    if (unlockRxBtn) {
+      unlockRxBtn.addEventListener("click", () => this.showPaywall("rx_unlock"));
     }
   }
 
@@ -430,6 +488,7 @@ class FloraApp {
   }
 
   renderDiagnosis(plant) {
+    this.lastDiagnosedPlant = plant;
     document.getElementById("diag-plant-name").textContent = plant.commonName || "Plant Diagnosed";
     document.getElementById("diag-botanical-name").textContent = plant.botanicalName || "Botanical Profile";
     document.getElementById("diag-health-number").textContent = `${plant.healthScore || 70}%`;
@@ -455,16 +514,27 @@ class FloraApp {
       { step: "Foliar Feed", action: "Mist leaves with dilute micronutrient solution." }
     ];
 
+    const isPro = purchasesManager.isPro;
+    const lockedBanner = document.getElementById("diag-pro-locked-banner");
+    if (lockedBanner) {
+      lockedBanner.style.display = isPro ? "none" : "flex";
+    }
+
     rxSteps.forEach((r, idx) => {
       const step = document.createElement("div");
-      step.className = "rx-item";
+      const isLocked = !isPro && idx > 0;
+      step.className = `rx-item ${isLocked ? "locked" : ""}`;
       step.innerHTML = `
         <div class="rx-num">${idx + 1}</div>
         <div>
-          <div class="rx-title">${r.step}</div>
-          <div class="rx-action">${r.action}</div>
+          <div class="rx-title">${r.step} ${isLocked ? "🔒" : ""}</div>
+          <div class="rx-action">${isLocked ? "Step dosages, fungicide dilution, and clinical recovery schedule are Flora Pro exclusive." : r.action}</div>
         </div>
       `;
+      if (isLocked) {
+        step.style.cursor = "pointer";
+        step.addEventListener("click", () => this.showPaywall("rx_step_click"));
+      }
       rxContainer.appendChild(step);
     });
 
