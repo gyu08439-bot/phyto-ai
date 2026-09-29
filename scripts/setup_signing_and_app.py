@@ -449,6 +449,7 @@ if os.path.exists(pbx_path):
     import re
     pbx = re.sub(r"PRODUCT_BUNDLE_IDENTIFIER = [^;]+;", f"PRODUCT_BUNDLE_IDENTIFIER = {selected_bundle_id};", pbx)
     pbx = re.sub(r"CURRENT_PROJECT_VERSION = [^;]+;", f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};", pbx)
+    pbx = re.sub(r"IPHONEOS_DEPLOYMENT_TARGET = [^;]+;", "IPHONEOS_DEPLOYMENT_TARGET = 16.0;", pbx)
     pbx = re.sub(r"CODE_SIGN_STYLE = Automatic;", "CODE_SIGN_STYLE = Manual;", pbx)
     pbx = re.sub(r'CODE_SIGN_IDENTITY = "[^"]*";', 'CODE_SIGN_IDENTITY = "Apple Distribution";', pbx)
     pbx = re.sub(r'CODE_SIGN_IDENTITY = iPhone Developer;', 'CODE_SIGN_IDENTITY = "Apple Distribution";', pbx)
