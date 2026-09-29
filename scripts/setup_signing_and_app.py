@@ -139,83 +139,125 @@ status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates
 existing_certs = res.get("data", []) if status == 200 else []
 print(f"Found {len(existing_certs)} distribution certificate(s).")
 
+# Clean up any orphaned CI certificates from previous runs
+for c in existing_certs:
+    c_attr = c.get("attributes", {})
+    c_name = c_attr.get("name", "")
+    c_id = c.get("id")
+    print(f"  Existing cert: ID={c_id}, Name='{c_name}'")
+    if "Flora" in c_name or "CI" in c_name:
+        print(f"  Cleaning up orphaned CI cert {c_id} ('{c_name}')...")
+        del_st, _ = api_request(f"https://api.appstoreconnect.apple.com/v1/certificates/{c_id}", method="DELETE")
+        print(f"  Revocation status: {del_st}")
+
+# Re-query certificates after cleanup
+status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION")
+existing_certs = res.get("data", []) if status == 200 else []
+print(f"Active certificates after cleanup: {len(existing_certs)}")
+
 cert_id = None
 p12_path = os.path.abspath("build/AppleDistribution.p12")
 os.makedirs("build", exist_ok=True)
 
-if len(existing_certs) < 3:
-    print("Generating RSA 2048 key and CSR...")
-    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, u"Apple Distribution: Flora AI CI"),
-    ])).sign(key, hashes.SHA256())
-    csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode("utf-8")
+print("Generating fresh RSA 2048 key and CSR for Apple Distribution...")
+key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
+    x509.NameAttribute(NameOID.COMMON_NAME, u"Apple Distribution: Flora AI CI"),
+])).sign(key, hashes.SHA256())
+csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode("utf-8")
 
-    cert_payload = {"data": {"type": "certificates", "attributes": {"certificateType": "DISTRIBUTION", "csrContent": csr_pem}}}
-    status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates", cert_payload)
-    if status in (200, 201) and res.get("data"):
-        cert_data = res["data"]
-        cert_id = cert_data["id"]
-        cert_der = base64.b64decode(cert_data["attributes"]["certificateContent"])
-        cert_obj = x509.load_der_x509_certificate(cert_der)
-        p12_bytes = pkcs12.serialize_key_and_certificates(
-            name=b"Apple Distribution: Flora AI",
-            key=key,
-            cert=cert_obj,
-            cas=None,
-            encryption_algorithm=serialization.BestAvailableEncryption(b"actions")
-        )
-        with open(p12_path, "wb") as pf:
-            pf.write(p12_bytes)
-        print(f"Saved Apple Distribution identity to {p12_path}")
-        if sys.platform == "darwin":
-            subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "actions", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
-            subprocess.run(["security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", "actions_password", "build.keychain"], check=False)
-            print("Imported certificate into macOS build keychain")
-    else:
-        if existing_certs:
-            cert_id = existing_certs[0]["id"]
-            print(f"Using existing cert ID: {cert_id}")
+cert_payload = {"data": {"type": "certificates", "attributes": {"certificateType": "DISTRIBUTION", "csrContent": csr_pem}}}
+status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates", cert_payload)
+
+if status in (200, 201) and res.get("data"):
+    cert_data = res["data"]
+    cert_id = cert_data["id"]
+    cert_der = base64.b64decode(cert_data["attributes"]["certificateContent"])
+    cert_obj = x509.load_der_x509_certificate(cert_der)
+    p12_bytes = pkcs12.serialize_key_and_certificates(
+        name=b"Apple Distribution: Flora AI",
+        key=key,
+        cert=cert_obj,
+        cas=None,
+        encryption_algorithm=serialization.BestAvailableEncryption(b"actions_password")
+    )
+    with open(p12_path, "wb") as pf:
+        pf.write(p12_bytes)
+    print(f"Saved Apple Distribution identity to {p12_path} (Cert ID: {cert_id})")
+
+    if sys.platform == "darwin":
+        subprocess.run(["security", "create-keychain", "-p", "actions_password", "build.keychain"], check=False)
+        subprocess.run(["security", "default-keychain", "-s", "build.keychain"], check=False)
+        subprocess.run(["security", "unlock-keychain", "-p", "actions_password", "build.keychain"], check=False)
+        subprocess.run(["security", "set-keychain-settings", "-t", "3600", "-u", "build.keychain"], check=False)
+        
+        # Download and import Apple WWDR intermediate certificates
+        for wwdr_url, fname in [
+            ("https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer", "AppleWWDRCAG3.cer"),
+            ("https://www.apple.com/certificateauthority/AppleWWDRCA.cer", "AppleWWDRCA.cer")
+        ]:
+            try:
+                fpath = os.path.join("build", fname)
+                urllib.request.urlretrieve(wwdr_url, fpath)
+                subprocess.run(["security", "import", fpath, "-k", "build.keychain"], check=False)
+            except Exception as e:
+                print(f"WWDR download note: {e}")
+
+        # Add build.keychain to keychain search list
+        res_kc = subprocess.run(["security", "list-keychains", "-d", "user"], capture_output=True, text=True)
+        cur_kcs = [k.strip().strip('"') for k in res_kc.stdout.splitlines() if k.strip()]
+        if "build.keychain" not in cur_kcs:
+            subprocess.run(["security", "list-keychains", "-d", "user", "-s", "build.keychain"] + cur_kcs, check=False)
+
+        # Import p12 into build.keychain
+        subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "actions_password", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
+        subprocess.run(["security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", "actions_password", "build.keychain"], check=False)
+        print("✓ Imported certificate into macOS build keychain")
+        subprocess.run(["security", "find-identity", "-v", "-p", "codesigning", "build.keychain"])
 else:
-    cert_id = existing_certs[0]["id"]
-    print(f"Using existing cert ID: {cert_id}")
+    print(f"❌ Failed to create certificate: {res}")
+    sys.exit(1)
 
 print("\n--- STEP 5: Provisioning Profile Setup ---")
 profiles_dir = os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles")
 os.makedirs(profiles_dir, exist_ok=True)
-status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/profiles?filter[profileType]=IOS_APP_STORE&filter[bundleId.identifier]={selected_bundle_id}")
-profile_installed = False
+
+# Create a fresh profile linked to our new certificate and bundle ID
 active_profile_uuid = None
+active_profile_name = None
 
-if status == 200 and res.get("data") and len(res["data"]) > 0:
-    for prof in res["data"]:
-        if prof["attributes"]["profileState"] == "ACTIVE":
-            content = base64.b64decode(prof["attributes"]["profileContent"])
-            active_profile_uuid = prof["attributes"].get("uuid", prof["id"])
-            with open(os.path.join(profiles_dir, f"{active_profile_uuid}.mobileprovision"), "wb") as mf:
-                mf.write(content)
-            print(f"Installed active profile: {prof['attributes']['name']} ({active_profile_uuid})")
-            profile_installed = True
-            break
-
-if not profile_installed and cert_id and bundle_obj_id:
-    prof_payload = {
-        "data": {
-            "type": "profiles",
-            "attributes": {"name": f"Flora AI AppStore {int(time.time())}", "profileType": "IOS_APP_STORE"},
-            "relationships": {
-                "bundleId": {"data": {"type": "bundleIds", "id": bundle_obj_id}},
-                "certificates": {"data": [{"type": "certificates", "id": cert_id}]}
-            }
+print(f"Creating fresh App Store provisioning profile for {selected_bundle_id} linked to cert {cert_id}...")
+prof_payload = {
+    "data": {
+        "type": "profiles",
+        "attributes": {"name": f"Flora AI AppStore {int(time.time())}", "profileType": "IOS_APP_STORE"},
+        "relationships": {
+            "bundleId": {"data": {"type": "bundleIds", "id": bundle_obj_id}},
+            "certificates": {"data": [{"type": "certificates", "id": cert_id}]}
         }
     }
-    status, res = api_request("https://api.appstoreconnect.apple.com/v1/profiles", prof_payload)
-    if status in (200, 201) and res.get("data"):
-        content = base64.b64decode(res["data"]["attributes"]["profileContent"])
-        active_profile_uuid = res["data"]["attributes"].get("uuid", res["data"]["id"])
-        with open(os.path.join(profiles_dir, f"{active_profile_uuid}.mobileprovision"), "wb") as mf:
-            mf.write(content)
-        print(f"Created and installed profile: {active_profile_uuid}")
+}
+status, res = api_request("https://api.appstoreconnect.apple.com/v1/profiles", prof_payload)
+if status in (200, 201) and res.get("data"):
+    content = base64.b64decode(res["data"]["attributes"]["profileContent"])
+    active_profile_uuid = res["data"]["attributes"].get("uuid", res["data"]["id"])
+    active_profile_name = res["data"]["attributes"]["name"]
+    with open(os.path.join(profiles_dir, f"{active_profile_uuid}.mobileprovision"), "wb") as mf:
+        mf.write(content)
+    print(f"Created and installed profile: {active_profile_name} ({active_profile_uuid})")
+else:
+    # If 409 because an active profile already exists, find and download it
+    print(f"Profile creation returned {status}: {res.get('errors', [{}])[0].get('detail', res)}")
+    status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/profiles?filter[profileType]=IOS_APP_STORE&filter[bundleId.identifier]={selected_bundle_id}")
+    if status == 200 and res.get("data"):
+        for prof in res["data"]:
+            content = base64.b64decode(prof["attributes"]["profileContent"])
+            active_profile_uuid = prof["attributes"].get("uuid", prof["id"])
+            active_profile_name = prof["attributes"]["name"]
+            with open(os.path.join(profiles_dir, f"{active_profile_uuid}.mobileprovision"), "wb") as mf:
+                mf.write(content)
+            print(f"Installed existing profile: {active_profile_name} ({active_profile_uuid})")
+            break
 
 env_file = os.environ.get("GITHUB_ENV")
 if env_file and active_profile_uuid:
