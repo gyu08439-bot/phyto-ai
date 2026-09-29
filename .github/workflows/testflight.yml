@@ -81,6 +81,10 @@ jobs:
             OTHER_CODE_SIGN_FLAGS="--keychain build.keychain" \
             -destination "generic/platform=iOS"
 
+      - name: Patch SDK & Xcode Version for Apple Ingestion
+        run: |
+          python3 scripts/patch_sdk_version.py build/Flora.xcarchive/Products/Applications/App.app
+
       - name: Export IPA
         run: |
           xcodebuild -exportArchive \
