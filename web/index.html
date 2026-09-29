@@ -43,59 +43,64 @@
       </div>
     </section>
 
-    <!-- 3. PAYWALL SCREEN (Native Apple HIG v4 Standard) -->
-    <section id="screen-paywall" class="screen internal-paywall-v4">
-      <div class="ipw-shell-v4">
-        <button id="paywall-close-btn" class="ipw-close-v4" aria-label="Close">×</button>
-        <div class="ipw-orb-v4">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
+    <!-- 3. PAYWALL SCREEN (Minimalist Luxury OLED Standard) -->
+    <section id="screen-paywall" class="screen paywall-screen-luxury">
+      <!-- Top Hero Visual (Macro Monstera on OLED Black) -->
+      <div class="pw-hero-wrap">
+        <img src="assets/paywall_monstera.jpg" alt="Botanical Vitality" class="pw-hero-img">
+        <div class="pw-hero-fade"></div>
+        <button id="paywall-close-btn" class="pw-close-btn" aria-label="Close">×</button>
+      </div>
+
+      <!-- Main Body Container -->
+      <div class="pw-body">
+        <div class="pw-eyebrow">FLORA AI PRO</div>
+        <h1 class="pw-headline">Never Kill Another Plant</h1>
+        <p class="pw-subheadline">Instant botanical diagnostics, clinical recovery protocols, and camera luxmeter.</p>
+
+        <!-- Big Minimalist Plans Stack -->
+        <div class="pw-plans-stack">
+          <!-- Annual Pass (Default Selected) -->
+          <div class="pw-card selected" id="plan-yearly">
+            <span class="pw-badge">BEST VALUE · SAVE 75%</span>
+            <div class="pw-card-left">
+              <span class="pw-radio"></span>
+              <div class="pw-card-meta">
+                <span class="pw-plan-title">Annual Plan</span>
+                <span class="pw-plan-desc">3 days free · billed yearly</span>
+              </div>
+            </div>
+            <div class="pw-card-pricing">
+              <span class="pw-price-bold">$2.49<small>/mo</small></span>
+              <span class="pw-price-sub">$29.99 / year</span>
+            </div>
+          </div>
+
+          <!-- Monthly Pass (Clear & Big) -->
+          <div class="pw-card" id="plan-monthly">
+            <div class="pw-card-left">
+              <span class="pw-radio"></span>
+              <div class="pw-card-meta">
+                <span class="pw-plan-title">Monthly Plan</span>
+                <span class="pw-plan-desc">Flexible · cancel anytime</span>
+              </div>
+            </div>
+            <div class="pw-card-pricing">
+              <span class="pw-price-bold">$7.99<small>/mo</small></span>
+              <span class="pw-price-sub">Billed monthly</span>
+            </div>
+          </div>
         </div>
-        <div class="ipw-eyebrow-v4">Flora AI Pro Access</div>
-        <h2>Never kill another plant</h2>
-        <p>Unlimited AI pathology, instant cure dosages, and botanical light meter.</p>
 
-        <div class="ipw-benefits-v4">
-          <div><span>✓</span> Unlimited leaf disease scans & pathogen ID</div>
-          <div><span>✓</span> 3-step clinical recovery protocols & dosages</div>
-          <div><span>✓</span> Camera luxmeter & species window calibration</div>
-          <div><span>✓</span> 24/7 toxic pet hazard radar for cats & dogs</div>
-        </div>
-
-        <div class="ipw-plan-list-v4">
-          <button type="button" class="ipw-plan-v4 selected" id="plan-yearly">
-            <span class="ipw-best-v4">BEST VALUE · SAVE 75%</span>
-            <span class="ipw-radio-v4"></span>
-            <span class="ipw-plan-copy-v4">
-              <b>Annual Pass</b>
-              <small>Billed annually · $2.49 / month</small>
-            </span>
-            <span class="ipw-price-v4">
-              <b>$29.99</b>
-              <small>per year</small>
-            </span>
-          </button>
-
-          <button type="button" class="ipw-plan-v4" id="plan-monthly">
-            <span class="ipw-radio-v4"></span>
-            <span class="ipw-plan-copy-v4">
-              <b>Monthly Pass</b>
-              <small>Flexible access · Cancel anytime</small>
-            </span>
-            <span class="ipw-price-v4">
-              <b>$7.99</b>
-              <small>per month</small>
-            </span>
-          </button>
-        </div>
-
-        <button class="ipw-cta-v4" id="paywall-cta-btn">
+        <!-- Big Tactile CTA Button -->
+        <button class="pw-cta" id="paywall-cta-btn">
           <span>Start 3-Day Free Trial</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
-        <button class="ipw-restore-v4" id="paywall-restore-btn">Restore Purchases</button>
-        <p class="ipw-legal-v4" id="paywall-trial-note">Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a></p>
+
+        <!-- Footer -->
+        <button class="pw-restore" id="paywall-restore-btn">Restore Purchases</button>
+        <p class="pw-legal" id="paywall-trial-note">Auto-renews until canceled in App Store. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a></p>
       </div>
     </section>
 
