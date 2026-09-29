@@ -92,11 +92,22 @@ jobs:
           fi
           echo "Found IPA: $IPA_PATH"
           echo "Uploading to TestFlight via xcrun altool..."
+          set +e
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
             --apiKey "$KEY_ID" \
             --apiIssuer "$ISSUER_ID"
+          ALTOOL_EXIT=$?
+          set -e
+          if [ $ALTOOL_EXIT -eq 0 ]; then
+            echo "✅ Successfully uploaded build to TestFlight!"
+          else
+            echo "⚠️ altool upload exited with code $ALTOOL_EXIT."
+            echo "If the error was -19000 (No suitable application records found), make sure to create the App record once in https://appstoreconnect.apple.com/apps with Bundle ID 'com.floraai.plantdoctor'."
+            echo "The fully signed IPA is saved in GitHub Artifacts below."
+            exit $ALTOOL_EXIT
+          fi
 
       - name: Upload IPA Artifact
         if: always()

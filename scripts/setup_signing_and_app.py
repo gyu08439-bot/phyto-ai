@@ -217,7 +217,6 @@ if not app_exists:
             ]
         }
         status, res = api_request("https://api.appstoreconnect.apple.com/v1/apps", compound_payload)
-        print(f"  Compound payload response ({status}): {res}")
         if status in (200, 201) and res.get("data"):
             target_app_id = res["data"]["id"]
             print(f"✓ Successfully created App record: '{app_name}' (ID: {target_app_id})")
@@ -237,7 +236,6 @@ if not app_exists:
             }
         }
         status_s, res_s = api_request("https://api.appstoreconnect.apple.com/v1/apps", simple_payload)
-        print(f"  Simple payload response ({status_s}): {res_s}")
         if status_s in (200, 201) and res_s.get("data"):
             target_app_id = res_s["data"]["id"]
             print(f"✓ Successfully created App record (simple): '{app_name}' (ID: {target_app_id})")
@@ -259,16 +257,31 @@ if not app_exists:
             }
         }
         status_r, res_r = api_request("https://api.appstoreconnect.apple.com/v1/apps", rel_payload)
-        print(f"  Relationship payload response ({status_r}): {res_r}")
         if status_r in (200, 201) and res_r.get("data"):
             target_app_id = res_r["data"]["id"]
             print(f"✓ Successfully created App record (relationship): '{app_name}' (ID: {target_app_id})")
             app_exists = True
             break
+        
+        # If Apple returns 403 FORBIDDEN_ERROR on 'apps', the REST API does not allow programmatic app creation
+        if status == 403 or status_s == 403 or status_r == 403:
+            print("  Note: Apple ASC API returns 403 FORBIDDEN for 'apps' CREATE on this account.")
+            break
 
 if not app_exists:
-    print("❌ ERROR: Could not create or find an App record in App Store Connect for", selected_bundle_id)
-    sys.exit(1)
+    print(f"\n=======================================================")
+    print(f"ℹ️  ACTION REQUIRED IN APP STORE CONNECT (ONE-TIME):")
+    print(f"Apple requires the App record to be initialized once in web UI:")
+    print(f"  1. Open https://appstoreconnect.apple.com/apps")
+    print(f"  2. Click '+' -> 'New App'")
+    print(f"  3. Platform: iOS")
+    print(f"  4. Name: Flora AI: Plant Doctor")
+    print(f"  5. Primary Language: English (U.S.)")
+    print(f"  6. Bundle ID: select '{selected_bundle_id}' from dropdown")
+    print(f"  7. SKU: flora-2026")
+    print(f"  8. Click 'Create'")
+    print(f"=======================================================\n")
+    print("Proceeding with Distribution Certificate & IPA compilation so the signed binary is ready...")
 
 print("\n--- STEP 4: Apple Distribution Certificate ---")
 status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION")
