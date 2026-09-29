@@ -8,7 +8,6 @@ import subprocess
 import urllib.request
 import urllib.error
 
-# Ensure required libraries
 try:
     import jwt
     from cryptography.hazmat.primitives.asymmetric import rsa
@@ -17,7 +16,7 @@ try:
     from cryptography.x509.oid import NameOID
     from cryptography.hazmat.primitives.serialization import pkcs12
 except ImportError:
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pyjwt', 'cryptography'])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "pyjwt", "cryptography"])
     import jwt
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.hazmat.primitives import serialization, hashes
@@ -25,248 +24,232 @@ except ImportError:
     from cryptography.x509.oid import NameOID
     from cryptography.hazmat.primitives.serialization import pkcs12
 
-KEY_ID = os.environ.get('APP_STORE_CONNECT_KEY_ID')
-ISSUER_ID = os.environ.get('APP_STORE_CONNECT_ISSUER_ID')
-KEY_CONTENT = os.environ.get('APP_STORE_CONNECT_API_KEY_CONTENT')
-TEAM_ID = os.environ.get('APPLE_TEAM_ID')
-BUILD_NUMBER = os.environ.get('GITHUB_RUN_NUMBER', str(int(time.time() / 100)))
+KEY_ID = os.environ.get("APP_STORE_CONNECT_KEY_ID")
+ISSUER_ID = os.environ.get("APP_STORE_CONNECT_ISSUER_ID")
+KEY_CONTENT = os.environ.get("APP_STORE_CONNECT_API_KEY_CONTENT")
+TEAM_ID = os.environ.get("APPLE_TEAM_ID")
+BUILD_NUMBER = os.environ.get("GITHUB_RUN_NUMBER", str(int(time.time() / 100)))
 
 if not KEY_ID or not ISSUER_ID or not KEY_CONTENT:
-    print('Error: Missing App Store Connect API credentials')
+    print("Error: Missing App Store Connect API credentials")
     sys.exit(1)
 
 raw_key = KEY_CONTENT.strip()
-if not raw_key.startswith('-----BEGIN'):
-    formatted_pem = f'-----BEGIN PRIVATE KEY-----
-{raw_key}
------END PRIVATE KEY-----'
+if not raw_key.startswith("-----BEGIN"):
+    formatted_pem = "-----BEGIN PRIVATE KEY-----\n" + raw_key + "\n-----END PRIVATE KEY-----"
 else:
-    formatted_pem = raw_key.replace('\n', '
-')
+    formatted_pem = raw_key.replace("\\n", "\n")
 
-home = os.path.expanduser('~')
-for kd in [os.path.join(home, '.appstoreconnect', 'private_keys'), os.path.join(home, '.private_keys')]:
+home = os.path.expanduser("~")
+for kd in [os.path.join(home, ".appstoreconnect", "private_keys"), os.path.join(home, ".private_keys")]:
     os.makedirs(kd, exist_ok=True)
-    p8_path = os.path.join(kd, f'AuthKey_{KEY_ID}.p8')
-    with open(p8_path, 'w') as f:
-        f.write(formatted_pem + '
-')
+    p8_path = os.path.join(kd, f"AuthKey_{KEY_ID}.p8")
+    with open(p8_path, "w") as kf:
+        kf.write(formatted_pem + "\n")
     os.chmod(p8_path, 0o600)
-    print(f'Saved API key to: {p8_path}')
+    print(f"Saved API key to: {p8_path}")
 
 now = int(time.time())
-payload = {'iss': ISSUER_ID, 'iat': now, 'exp': now + 1200, 'aud': 'appstoreconnect-v1'}
-headers = {'kid': KEY_ID, 'alg': 'ES256', 'typ': 'JWT'}
+payload = {"iss": ISSUER_ID, "iat": now, "exp": now + 1200, "aud": "appstoreconnect-v1"}
+headers = {"kid": KEY_ID, "alg": "ES256", "typ": "JWT"}
 
-token = jwt.encode(payload, formatted_pem, algorithm='ES256', headers=headers)
+token = jwt.encode(payload, formatted_pem, algorithm="ES256", headers=headers)
 if isinstance(token, bytes):
-    token = token.decode('utf-8')
+    token = token.decode("utf-8")
 
 def api_request(url, data=None, method=None):
-    req_headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json', 'Accept': 'application/json'}
-    body = json.dumps(data).encode('utf-8') if data else None
+    req_headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
+    body = json.dumps(data).encode("utf-8") if data else None
     req = urllib.request.Request(url, data=body, headers=req_headers, method=method)
     try:
         with urllib.request.urlopen(req) as resp:
-            return resp.status, json.loads(resp.read().decode('utf-8'))
+            return resp.status, json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        err_body = e.read().decode('utf-8')
+        err_body = e.read().decode("utf-8")
         try:
             return e.code, json.loads(err_body)
         except Exception:
-            return e.code, {'raw': err_body}
+            return e.code, {"raw": err_body}
     except Exception as e:
-        return 500, {'error': str(e)}
+        return 500, {"error": str(e)}
 
-print('
---- STEP 1: Verify Authentication ---')
-status, res = api_request('https://api.appstoreconnect.apple.com/v1/apps?limit=5')
+print("\n--- STEP 1: Verify Authentication ---")
+status, res = api_request("https://api.appstoreconnect.apple.com/v1/apps?limit=5")
 if status != 200:
-    print(f'Failed to authenticate with App Store Connect API: HTTP {status}', res)
+    print(f"Failed to authenticate with App Store Connect API: HTTP {status}", res)
     sys.exit(1)
-print('App Store Connect API Authenticated successfully!')
+print("App Store Connect API Authenticated successfully!")
 
-print('
---- STEP 2: Bundle ID Registration ---')
-candidate_bundle_ids = ['com.floraai.app', 'com.floraai.plantdoctor', 'com.floraai.bot', 'com.flora.ai']
+print("\n--- STEP 2: Bundle ID Registration ---")
+candidate_bundle_ids = ["com.floraai.app", "com.floraai.plantdoctor", "com.floraai.bot", "com.flora.ai"]
 selected_bundle_id = None
 bundle_obj_id = None
 
 for bid in candidate_bundle_ids:
-    print(f'Checking Bundle ID: {bid}...')
-    status, res = api_request(f'https://api.appstoreconnect.apple.com/v1/bundleIds?filter[identifier]={bid}')
-    if status == 200 and res.get('data') and len(res['data']) > 0:
+    print(f"Checking Bundle ID: {bid}...")
+    status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/bundleIds?filter[identifier]={bid}")
+    if status == 200 and res.get("data") and len(res["data"]) > 0:
         selected_bundle_id = bid
-        bundle_obj_id = res['data'][0]['id']
-        print(f'Found existing Bundle ID: {bid} (ID: {bundle_obj_id})')
+        bundle_obj_id = res["data"][0]["id"]
+        print(f"Found existing Bundle ID: {bid} (ID: {bundle_obj_id})")
         break
     else:
-        create_payload = {'data': {'type': 'bundleIds', 'attributes': {'identifier': bid, 'name': 'Flora AI', 'platform': 'UNIVERSAL'}}}
-        status, res = api_request('https://api.appstoreconnect.apple.com/v1/bundleIds', create_payload)
-        if status in (200, 201) and res.get('data'):
+        create_payload = {"data": {"type": "bundleIds", "attributes": {"identifier": bid, "name": "Flora AI", "platform": "UNIVERSAL"}}}
+        status, res = api_request("https://api.appstoreconnect.apple.com/v1/bundleIds", create_payload)
+        if status in (200, 201) and res.get("data"):
             selected_bundle_id = bid
-            bundle_obj_id = res['data']['id']
-            print(f'Successfully registered Bundle ID: {bid} (ID: {bundle_obj_id})')
+            bundle_obj_id = res["data"]["id"]
+            print(f"Successfully registered Bundle ID: {bid} (ID: {bundle_obj_id})")
             break
 
 if not selected_bundle_id:
-    random_bid = f'com.floraai.app{int(time.time()) % 10000}'
-    create_payload = {'data': {'type': 'bundleIds', 'attributes': {'identifier': random_bid, 'name': 'Flora AI', 'platform': 'UNIVERSAL'}}}
-    status, res = api_request('https://api.appstoreconnect.apple.com/v1/bundleIds', create_payload)
-    if status in (200, 201) and res.get('data'):
+    random_bid = f"com.floraai.app{int(time.time()) % 10000}"
+    create_payload = {"data": {"type": "bundleIds", "attributes": {"identifier": random_bid, "name": "Flora AI", "platform": "UNIVERSAL"}}}
+    status, res = api_request("https://api.appstoreconnect.apple.com/v1/bundleIds", create_payload)
+    if status in (200, 201) and res.get("data"):
         selected_bundle_id = random_bid
-        bundle_obj_id = res['data']['id']
-        print(f'Successfully registered Bundle ID: {selected_bundle_id}')
+        bundle_obj_id = res["data"]["id"]
+        print(f"Successfully registered Bundle ID: {selected_bundle_id}")
     else:
-        print('Failed to register Bundle ID', res)
+        print("Failed to register Bundle ID", res)
         sys.exit(1)
 
-print(f'Target Bundle ID: {selected_bundle_id}')
+print(f"Target Bundle ID: {selected_bundle_id}")
 
-print('
---- STEP 3: App Store Connect App Record ---')
-status, res = api_request(f'https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]={selected_bundle_id}')
-if status == 200 and res.get('data') and len(res['data']) > 0:
-    print(f'App already exists: {res["data"][0]["attributes"]["name"]}')
+print("\n--- STEP 3: App Store Connect App Record ---")
+status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]={selected_bundle_id}")
+if status == 200 and res.get("data") and len(res["data"]) > 0:
+    print(f"App already exists: {res['data'][0]['attributes']['name']}")
 else:
-    for app_name in ['Flora AI: Plant Doctor', 'Flora AI - Plant Disease Doctor', 'Flora AI Plant Care & Doctor', f'Flora AI Doctor {int(time.time()) % 1000}']:
+    for app_name in ["Flora AI: Plant Doctor", "Flora AI - Plant Disease Doctor", "Flora AI Plant Care & Doctor", f"Flora AI Doctor {int(time.time()) % 1000}"]:
         app_payload = {
-            'data': {
-                'type': 'apps',
-                'attributes': {'name': app_name, 'sku': f'FLORA_AI_{int(time.time())}', 'primaryLocale': 'en-US'},
-                'relationships': {'bundleId': {'data': {'type': 'bundleIds', 'id': bundle_obj_id}}}
+            "data": {
+                "type": "apps",
+                "attributes": {"name": app_name, "sku": f"FLORA_AI_{int(time.time())}", "primaryLocale": "en-US"},
+                "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bundle_obj_id}}}
             }
         }
-        status, res = api_request('https://api.appstoreconnect.apple.com/v1/apps', app_payload)
-        if status in (200, 201) and res.get('data'):
-            print(f'Successfully created App record: {app_name}')
+        status, res = api_request("https://api.appstoreconnect.apple.com/v1/apps", app_payload)
+        if status in (200, 201) and res.get("data"):
+            print(f"Successfully created App record: {app_name}")
             break
 
-print('
---- STEP 4: Apple Distribution Certificate ---')
-status, res = api_request('https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION')
-existing_certs = res.get('data', []) if status == 200 else []
-print(f'Found {len(existing_certs)} distribution certificate(s).')
+print("\n--- STEP 4: Apple Distribution Certificate ---")
+status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]=DISTRIBUTION,IOS_DISTRIBUTION")
+existing_certs = res.get("data", []) if status == 200 else []
+print(f"Found {len(existing_certs)} distribution certificate(s).")
 
 cert_id = None
-p12_path = os.path.abspath('build/AppleDistribution.p12')
-os.makedirs('build', exist_ok=True)
+p12_path = os.path.abspath("build/AppleDistribution.p12")
+os.makedirs("build", exist_ok=True)
 
 if len(existing_certs) < 3:
-    print('Generating RSA 2048 key and CSR...')
+    print("Generating RSA 2048 key and CSR...")
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, u'Apple Distribution: Flora AI CI'),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"Apple Distribution: Flora AI CI"),
     ])).sign(key, hashes.SHA256())
-    csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+    csr_pem = csr.public_bytes(serialization.Encoding.PEM).decode("utf-8")
 
-    cert_payload = {'data': {'type': 'certificates', 'attributes': {'certificateType': 'DISTRIBUTION', 'csrContent': csr_pem}}}
-    status, res = api_request('https://api.appstoreconnect.apple.com/v1/certificates', cert_payload)
-    if status in (200, 201) and res.get('data'):
-        cert_data = res['data']
-        cert_id = cert_data['id']
-        cert_der = base64.b64decode(cert_data['attributes']['certificateContent'])
+    cert_payload = {"data": {"type": "certificates", "attributes": {"certificateType": "DISTRIBUTION", "csrContent": csr_pem}}}
+    status, res = api_request("https://api.appstoreconnect.apple.com/v1/certificates", cert_payload)
+    if status in (200, 201) and res.get("data"):
+        cert_data = res["data"]
+        cert_id = cert_data["id"]
+        cert_der = base64.b64decode(cert_data["attributes"]["certificateContent"])
         cert_obj = x509.load_der_x509_certificate(cert_der)
         p12_bytes = pkcs12.serialize_key_and_certificates(
-            name=b'Apple Distribution: Flora AI',
+            name=b"Apple Distribution: Flora AI",
             key=key,
             cert=cert_obj,
             cas=None,
-            encryption_algorithm=serialization.BestAvailableEncryption(b'actions')
+            encryption_algorithm=serialization.BestAvailableEncryption(b"actions")
         )
-        with open(p12_path, 'wb') as f:
-            f.write(p12_bytes)
-        print(f'Saved Apple Distribution identity to {p12_path}')
-        if sys.platform == 'darwin':
-            subprocess.run(['security', 'import', p12_path, '-k', 'build.keychain', '-P', 'actions', '-T', '/usr/bin/codesign', '-T', '/usr/bin/security'], check=False)
-            subprocess.run(['security', 'set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', 'actions_password', 'build.keychain'], check=False)
-            print('Imported certificate into macOS build keychain')
+        with open(p12_path, "wb") as pf:
+            pf.write(p12_bytes)
+        print(f"Saved Apple Distribution identity to {p12_path}")
+        if sys.platform == "darwin":
+            subprocess.run(["security", "import", p12_path, "-k", "build.keychain", "-P", "actions", "-T", "/usr/bin/codesign", "-T", "/usr/bin/security"], check=False)
+            subprocess.run(["security", "set-key-partition-list", "-S", "apple-tool:,apple:,codesign:", "-s", "-k", "actions_password", "build.keychain"], check=False)
+            print("Imported certificate into macOS build keychain")
     else:
         if existing_certs:
-            cert_id = existing_certs[0]['id']
-            print(f'Using existing cert ID: {cert_id}')
+            cert_id = existing_certs[0]["id"]
+            print(f"Using existing cert ID: {cert_id}")
 else:
-    cert_id = existing_certs[0]['id']
-    print(f'Using existing cert ID: {cert_id}')
+    cert_id = existing_certs[0]["id"]
+    print(f"Using existing cert ID: {cert_id}")
 
-print('
---- STEP 5: Provisioning Profile Setup ---')
-profiles_dir = os.path.expanduser('~/Library/MobileDevice/Provisioning Profiles')
+print("\n--- STEP 5: Provisioning Profile Setup ---")
+profiles_dir = os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles")
 os.makedirs(profiles_dir, exist_ok=True)
-status, res = api_request(f'https://api.appstoreconnect.apple.com/v1/profiles?filter[profileType]=IOS_APP_STORE&filter[bundleId.identifier]={selected_bundle_id}')
+status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/profiles?filter[profileType]=IOS_APP_STORE&filter[bundleId.identifier]={selected_bundle_id}")
 profile_installed = False
 
-if status == 200 and res.get('data') and len(res['data']) > 0:
-    for prof in res['data']:
-        if prof['attributes']['profileState'] == 'ACTIVE':
-            content = base64.b64decode(prof['attributes']['profileContent'])
-            uuid = prof['attributes'].get('uuid', prof['id'])
-            with open(os.path.join(profiles_dir, f'{uuid}.mobileprovision'), 'wb') as f:
-                f.write(content)
-            print(f'Installed active profile: {prof["attributes"]["name"]} ({uuid})')
+if status == 200 and res.get("data") and len(res["data"]) > 0:
+    for prof in res["data"]:
+        if prof["attributes"]["profileState"] == "ACTIVE":
+            content = base64.b64decode(prof["attributes"]["profileContent"])
+            uuid = prof["attributes"].get("uuid", prof["id"])
+            with open(os.path.join(profiles_dir, f"{uuid}.mobileprovision"), "wb") as mf:
+                mf.write(content)
+            print(f"Installed active profile: {prof['attributes']['name']} ({uuid})")
             profile_installed = True
             break
 
 if not profile_installed and cert_id and bundle_obj_id:
     prof_payload = {
-        'data': {
-            'type': 'profiles',
-            'attributes': {'name': f'Flora AI AppStore {int(time.time())}', 'profileType': 'IOS_APP_STORE'},
-            'relationships': {
-                'bundleId': {'data': {'type': 'bundleIds', 'id': bundle_obj_id}},
-                'certificates': {'data': [{'type': 'certificates', 'id': cert_id}]}
+        "data": {
+            "type": "profiles",
+            "attributes": {"name": f"Flora AI AppStore {int(time.time())}", "profileType": "IOS_APP_STORE"},
+            "relationships": {
+                "bundleId": {"data": {"type": "bundleIds", "id": bundle_obj_id}},
+                "certificates": {"data": [{"type": "certificates", "id": cert_id}]}
             }
         }
     }
-    status, res = api_request('https://api.appstoreconnect.apple.com/v1/profiles', prof_payload)
-    if status in (200, 201) and res.get('data'):
-        content = base64.b64decode(res['data']['attributes']['profileContent'])
-        uuid = res['data']['attributes'].get('uuid', res['data']['id'])
-        with open(os.path.join(profiles_dir, f'{uuid}.mobileprovision'), 'wb') as f:
-            f.write(content)
-        print(f'Created and installed profile: {uuid}')
+    status, res = api_request("https://api.appstoreconnect.apple.com/v1/profiles", prof_payload)
+    if status in (200, 201) and res.get("data"):
+        content = base64.b64decode(res["data"]["attributes"]["profileContent"])
+        uuid = res["data"]["attributes"].get("uuid", res["data"]["id"])
+        with open(os.path.join(profiles_dir, f"{uuid}.mobileprovision"), "wb") as mf:
+            mf.write(content)
+        print(f"Created and installed profile: {uuid}")
 
-print('
---- STEP 6: Update Local Files ---')
-for c_path in ['capacitor.config.json', 'ios/App/App/capacitor.config.json']:
+print("\n--- STEP 6: Update Local Files ---")
+for c_path in ["capacitor.config.json", "ios/App/App/capacitor.config.json"]:
     if os.path.exists(c_path):
-        with open(c_path, 'r') as f:
-            cap_cfg = json.load(f)
-        cap_cfg['appId'] = selected_bundle_id
-        with open(c_path, 'w') as f:
-            json.dump(cap_cfg, f, indent=2)
-        print(f'Updated appId in {c_path}')
+        with open(c_path, "r") as cf:
+            cap_cfg = json.load(cf)
+        cap_cfg["appId"] = selected_bundle_id
+        with open(c_path, "w") as cf:
+            json.dump(cap_cfg, cf, indent=2)
+        print(f"Updated appId in {c_path}")
 
-pbx_path = 'ios/App/App.xcodeproj/project.pbxproj'
+pbx_path = "ios/App/App.xcodeproj/project.pbxproj"
 if os.path.exists(pbx_path):
-    with open(pbx_path, 'r') as f:
-        pbx = f.read()
+    with open(pbx_path, "r") as pf:
+        pbx = pf.read()
     import re
-    pbx = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;', f'PRODUCT_BUNDLE_IDENTIFIER = {selected_bundle_id};', pbx)
-    pbx = re.sub(r'CURRENT_PROJECT_VERSION = [^;]+;', f'CURRENT_PROJECT_VERSION = {BUILD_NUMBER};', pbx)
+    pbx = re.sub(r"PRODUCT_BUNDLE_IDENTIFIER = [^;]+;", f"PRODUCT_BUNDLE_IDENTIFIER = {selected_bundle_id};", pbx)
+    pbx = re.sub(r"CURRENT_PROJECT_VERSION = [^;]+;", f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};", pbx)
     if TEAM_ID:
-        if 'DEVELOPMENT_TEAM' in pbx:
-            pbx = re.sub(r'DEVELOPMENT_TEAM = [^;]+;', f'DEVELOPMENT_TEAM = {TEAM_ID};', pbx)
+        if "DEVELOPMENT_TEAM" in pbx:
+            pbx = re.sub(r"DEVELOPMENT_TEAM = [^;]+;", f"DEVELOPMENT_TEAM = {TEAM_ID};", pbx)
         else:
-            pbx = pbx.replace('CODE_SIGN_STYLE = Automatic;', f'CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = {TEAM_ID};')
-    with open(pbx_path, 'w') as f:
-        f.write(pbx)
-    print(f'Updated {pbx_path}')
+            pbx = pbx.replace("CODE_SIGN_STYLE = Automatic;", f"CODE_SIGN_STYLE = Automatic;\n\t\t\t\tDEVELOPMENT_TEAM = {TEAM_ID};")
+    with open(pbx_path, "w") as pf:
+        pf.write(pbx)
+    print(f"Updated {pbx_path}")
 
-export_opts = 'ios/App/exportOptions.plist'
+export_opts = "ios/App/exportOptions.plist"
 if os.path.exists(export_opts) and TEAM_ID:
-    with open(export_opts, 'r') as f:
-        exp = f.read()
-    if '<key>teamID</key>' not in exp:
-        exp = exp.replace('<key>signingStyle</key>
-    <string>automatic</string>', f'<key>signingStyle</key>
-    <string>automatic</string>
-    <key>teamID</key>
-    <string>{TEAM_ID}</string>')
-        with open(export_opts, 'w') as f:
-            f.write(exp)
-        print(f'Updated {export_opts} with teamID')
+    with open(export_opts, "r") as ef:
+        exp = ef.read()
+    if "<key>teamID</key>" not in exp:
+        exp = exp.replace("<key>signingStyle</key>\n    <string>automatic</string>", f"<key>signingStyle</key>\n    <string>automatic</string>\n    <key>teamID</key>\n    <string>{TEAM_ID}</string>")
+        with open(export_opts, "w") as ef:
+            ef.write(exp)
+        print(f"Updated {export_opts} with teamID")
 
-print('
-Setup finished successfully!')
+print("\nSetup finished successfully!")
