@@ -57,8 +57,6 @@ jobs:
 
       - name: Build Xcode Archive
         env:
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           mkdir -p build
@@ -67,27 +65,18 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath build/Flora.xcarchive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 \
-            -authenticationKeyID ${KEY_ID} \
-            -authenticationKeyIssuerID ${ISSUER_ID} \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
             DEVELOPMENT_TEAM=${TEAM_ID} \
+            PROVISIONING_PROFILE_SPECIFIER="${PROFILE_UUID}" \
             -destination "generic/platform=iOS"
 
       - name: Export IPA
-        env:
-          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           xcodebuild -exportArchive \
             -archivePath build/Flora.xcarchive \
             -exportPath build/output \
-            -exportOptionsPlist ios/App/exportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 \
-            -authenticationKeyID ${KEY_ID} \
-            -authenticationKeyIssuerID ${ISSUER_ID}
+            -exportOptionsPlist ios/App/exportOptions.plist
 
       - name: Upload IPA to TestFlight
         env:
