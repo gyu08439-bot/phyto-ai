@@ -15,6 +15,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Select Xcode 16 (iOS 18 SDK)
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | tail -n 1)
+          if [ -n "$XCODE_PATH" ]; then
+            echo "Switching to $XCODE_PATH..."
+            sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          fi
+          xcodebuild -version
+
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
