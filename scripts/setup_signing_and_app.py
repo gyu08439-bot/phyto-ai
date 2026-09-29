@@ -185,15 +185,16 @@ profiles_dir = os.path.expanduser("~/Library/MobileDevice/Provisioning Profiles"
 os.makedirs(profiles_dir, exist_ok=True)
 status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/profiles?filter[profileType]=IOS_APP_STORE&filter[bundleId.identifier]={selected_bundle_id}")
 profile_installed = False
+active_profile_uuid = None
 
 if status == 200 and res.get("data") and len(res["data"]) > 0:
     for prof in res["data"]:
         if prof["attributes"]["profileState"] == "ACTIVE":
             content = base64.b64decode(prof["attributes"]["profileContent"])
-            uuid = prof["attributes"].get("uuid", prof["id"])
-            with open(os.path.join(profiles_dir, f"{uuid}.mobileprovision"), "wb") as mf:
+            active_profile_uuid = prof["attributes"].get("uuid", prof["id"])
+            with open(os.path.join(profiles_dir, f"{active_profile_uuid}.mobileprovision"), "wb") as mf:
                 mf.write(content)
-            print(f"Installed active profile: {prof['attributes']['name']} ({uuid})")
+            print(f"Installed active profile: {prof['attributes']['name']} ({active_profile_uuid})")
             profile_installed = True
             break
 
@@ -211,10 +212,17 @@ if not profile_installed and cert_id and bundle_obj_id:
     status, res = api_request("https://api.appstoreconnect.apple.com/v1/profiles", prof_payload)
     if status in (200, 201) and res.get("data"):
         content = base64.b64decode(res["data"]["attributes"]["profileContent"])
-        uuid = res["data"]["attributes"].get("uuid", res["data"]["id"])
-        with open(os.path.join(profiles_dir, f"{uuid}.mobileprovision"), "wb") as mf:
+        active_profile_uuid = res["data"]["attributes"].get("uuid", res["data"]["id"])
+        with open(os.path.join(profiles_dir, f"{active_profile_uuid}.mobileprovision"), "wb") as mf:
             mf.write(content)
-        print(f"Created and installed profile: {uuid}")
+        print(f"Created and installed profile: {active_profile_uuid}")
+
+env_file = os.environ.get("GITHUB_ENV")
+if env_file and active_profile_uuid:
+    with open(env_file, "a") as ef:
+        ef.write(f"PROFILE_UUID={active_profile_uuid}\n")
+        ef.write(f"TARGET_BUNDLE_ID={selected_bundle_id}\n")
+    print(f"Exported PROFILE_UUID={active_profile_uuid} to GITHUB_ENV")
 
 print("\n--- STEP 6: Update Local Files ---")
 for c_path in ["capacitor.config.json", "ios/App/App/capacitor.config.json"]:
@@ -233,23 +241,51 @@ if os.path.exists(pbx_path):
     import re
     pbx = re.sub(r"PRODUCT_BUNDLE_IDENTIFIER = [^;]+;", f"PRODUCT_BUNDLE_IDENTIFIER = {selected_bundle_id};", pbx)
     pbx = re.sub(r"CURRENT_PROJECT_VERSION = [^;]+;", f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};", pbx)
+    pbx = re.sub(r"CODE_SIGN_STYLE = Automatic;", "CODE_SIGN_STYLE = Manual;", pbx)
+    pbx = re.sub(r'CODE_SIGN_IDENTITY = "[^"]*";', 'CODE_SIGN_IDENTITY = "Apple Distribution";', pbx)
+    pbx = re.sub(r'CODE_SIGN_IDENTITY = iPhone Developer;', 'CODE_SIGN_IDENTITY = "Apple Distribution";', pbx)
     if TEAM_ID:
         if "DEVELOPMENT_TEAM" in pbx:
             pbx = re.sub(r"DEVELOPMENT_TEAM = [^;]+;", f"DEVELOPMENT_TEAM = {TEAM_ID};", pbx)
         else:
-            pbx = pbx.replace("CODE_SIGN_STYLE = Automatic;", f"CODE_SIGN_STYLE = Automatic;\n\t\t\t\tDEVELOPMENT_TEAM = {TEAM_ID};")
+            pbx = pbx.replace("CODE_SIGN_STYLE = Manual;", f"CODE_SIGN_STYLE = Manual;\n\t\t\t\tDEVELOPMENT_TEAM = {TEAM_ID};")
+    if active_profile_uuid:
+        if "PROVISIONING_PROFILE_SPECIFIER" in pbx:
+            pbx = re.sub(r"PROVISIONING_PROFILE_SPECIFIER = [^;]+;", f'PROVISIONING_PROFILE_SPECIFIER = "{active_profile_uuid}";', pbx)
+        else:
+            pbx = pbx.replace("CODE_SIGN_STYLE = Manual;", f'CODE_SIGN_STYLE = Manual;\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{active_profile_uuid}";')
     with open(pbx_path, "w") as pf:
         pf.write(pbx)
-    print(f"Updated {pbx_path}")
+    print(f"Updated {pbx_path} with Manual Signing and profile UUID {active_profile_uuid}")
 
 export_opts = "ios/App/exportOptions.plist"
-if os.path.exists(export_opts) and TEAM_ID:
-    with open(export_opts, "r") as ef:
-        exp = ef.read()
-    if "<key>teamID</key>" not in exp:
-        exp = exp.replace("<key>signingStyle</key>\n    <string>automatic</string>", f"<key>signingStyle</key>\n    <string>automatic</string>\n    <key>teamID</key>\n    <string>{TEAM_ID}</string>")
-        with open(export_opts, "w") as ef:
-            ef.write(exp)
-        print(f"Updated {export_opts} with teamID")
+if os.path.exists(export_opts) and TEAM_ID and active_profile_uuid:
+    export_dict = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+    <key>destination</key>
+    <string>export</string>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>teamID</key>
+    <string>{TEAM_ID}</string>
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>{selected_bundle_id}</key>
+        <string>{active_profile_uuid}</string>
+    </dict>
+    <key>manageAppVersionAndBuildNumber</key>
+    <true/>
+</dict>
+</plist>
+"""
+    with open(export_opts, "w") as ef:
+        ef.write(export_dict)
+    print(f"Updated {export_opts} with complete manual signing dictionary")
 
 print("\nSetup finished successfully!")
