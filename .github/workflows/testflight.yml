@@ -1,0 +1,117 @@
+name: Deploy to TestFlight
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  testflight:
+    name: Build & Upload to TestFlight
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install pyjwt cryptography requests
+
+      - name: Install npm dependencies
+        run: |
+          npm ci || npm install
+
+      - name: Sync Capacitor iOS
+        run: |
+          npx cap sync ios
+
+      - name: Configure App Store Connect & Code Signing
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          python3 scripts/setup_signing_and_app.py
+
+      - name: Install CocoaPods
+        run: |
+          cd ios/App
+          pod install
+          cd ../..
+
+      - name: Build Xcode Archive
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          mkdir -p build
+          xcodebuild archive \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath build/Flora.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 \
+            -authenticationKeyID ${KEY_ID} \
+            -authenticationKeyIssuerID ${ISSUER_ID} \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=${TEAM_ID} \
+            -destination "generic/platform=iOS"
+
+      - name: Export IPA
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/Flora.xcarchive \
+            -exportPath build/output \
+            -exportOptionsPlist ios/App/exportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 \
+            -authenticationKeyID ${KEY_ID} \
+            -authenticationKeyIssuerID ${ISSUER_ID}
+
+      - name: Upload IPA to TestFlight
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          IPA_PATH=$(find build/output -name "*.ipa" | head -n 1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "❌ Error: IPA file not found in build/output"
+            ls -la build/output
+            exit 1
+          fi
+          echo "Found IPA: $IPA_PATH"
+          echo "Uploading to TestFlight via xcrun altool..."
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$KEY_ID" \
+            --apiIssuer "$ISSUER_ID"
+
+      - name: Upload IPA Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Flora-AI-TestFlight-IPA
+          path: build/output/*.ipa
+          if-no-files-found: warn

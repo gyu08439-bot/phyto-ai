@@ -2,7 +2,6 @@
   "appId": "com.flora.ai",
   "appName": "Flora AI",
   "webDir": "web",
-  "bundledWebRuntime": false,
   "ios": {
     "preferredContentMode": "mobile",
     "contentInset": "always",

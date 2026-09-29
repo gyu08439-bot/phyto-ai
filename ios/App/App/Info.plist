@@ -49,5 +49,7 @@
 	<string>Flora AI needs camera access to scan and diagnose plant leaves.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Flora AI needs photo library access to analyze saved photos of your plants.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
