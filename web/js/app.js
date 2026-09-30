@@ -33,55 +33,23 @@ class FloraApp {
 
   loadGarden() {
     try {
-      const saved = localStorage.getItem("flora_garden_v3");
+      const saved = localStorage.getItem("flora_garden_v4");
       if (saved) {
         this.myPlants = JSON.parse(saved);
       } else {
-        this.myPlants = [
-          {
-            id: "g_1",
-            nickname: "Living Room Monstera",
-            commonName: PLANT_DATABASE[0].commonName,
-            botanicalName: PLANT_DATABASE[0].botanicalName,
-            icon: PLANT_DATABASE[0].icon,
-            healthScore: 78,
-            nextWaterDays: 2,
-            wateringInterval: PLANT_DATABASE[0].wateringInterval,
-            petToxicity: PLANT_DATABASE[0].petToxicity
-          },
-          {
-            id: "g_2",
-            nickname: "Balcony Ficus",
-            commonName: PLANT_DATABASE[1].commonName,
-            botanicalName: PLANT_DATABASE[1].botanicalName,
-            icon: PLANT_DATABASE[1].icon,
-            healthScore: 88,
-            nextWaterDays: 6,
-            wateringInterval: PLANT_DATABASE[1].wateringInterval,
-            petToxicity: PLANT_DATABASE[1].petToxicity
-          },
-          {
-            id: "g_3",
-            nickname: "Desk Snake Plant",
-            commonName: PLANT_DATABASE[2].commonName,
-            botanicalName: PLANT_DATABASE[2].botanicalName,
-            icon: PLANT_DATABASE[2].icon,
-            healthScore: 94,
-            nextWaterDays: 14,
-            wateringInterval: PLANT_DATABASE[2].wateringInterval,
-            petToxicity: PLANT_DATABASE[2].petToxicity
-          }
-        ];
+        // Fresh install starts with an empty garden (User requirement)
+        this.myPlants = [];
         this.saveGarden();
       }
     } catch (e) {
       console.warn("LocalStorage error:", e);
+      this.myPlants = [];
     }
   }
 
   saveGarden() {
     try {
-      localStorage.setItem("flora_garden_v3", JSON.stringify(this.myPlants));
+      localStorage.setItem("flora_garden_v4", JSON.stringify(this.myPlants));
     } catch (e) {
       console.warn("Save failed:", e);
     }
@@ -123,6 +91,13 @@ class FloraApp {
       });
     }
 
+    // Auto-manage live camera stream
+    if (screenKey === "scanner") {
+      if (this.scanner) this.scanner.startCamera();
+    } else {
+      if (this.scanner) this.scanner.stopCamera();
+    }
+
     if (screenKey !== "luxmeter" && this.lightMeter) {
       this.lightMeter.stop();
     }
@@ -134,11 +109,6 @@ class FloraApp {
         const target = btn.getAttribute("data-target");
         if (target) {
           this.showScreen(target);
-          if (target === "scanner") {
-            this.scanner.startCamera();
-          } else {
-            this.scanner.stopCamera();
-          }
         }
       });
     });
@@ -368,6 +338,30 @@ class FloraApp {
     const countDisplay = document.getElementById("garden-count-badge");
     if (!container) return;
 
+    if (!this.myPlants || this.myPlants.length === 0) {
+      if (vitalityDisplay) vitalityDisplay.textContent = `--`;
+      if (countDisplay) countDisplay.textContent = `0 Plants`;
+
+      container.innerHTML = `
+        <div class="empty-garden-card">
+          <div class="empty-garden-icon">🪴</div>
+          <div class="empty-garden-title">Your Garden is Empty</div>
+          <div class="empty-garden-desc">Scan a plant to detect diseases, monitor vitality, and automate watering schedules.</div>
+          <button id="btn-empty-scan-first" class="btn-empty-scan">
+            <span>📷 Scan Your First Plant</span>
+          </button>
+        </div>
+      `;
+
+      const scanBtn = document.getElementById("btn-empty-scan-first");
+      if (scanBtn) {
+        scanBtn.addEventListener("click", () => {
+          this.showScreen("scanner");
+        });
+      }
+      return;
+    }
+
     let list = this.myPlants;
     if (this.gardenFilter === "water") {
       list = this.myPlants.filter(p => p.nextWaterDays <= 2);
@@ -375,9 +369,7 @@ class FloraApp {
       list = this.myPlants.filter(p => (p.healthScore || 80) < 80);
     }
 
-    const avgHealth = this.myPlants.length > 0
-      ? Math.round(this.myPlants.reduce((sum, p) => sum + (p.healthScore || 80), 0) / this.myPlants.length)
-      : 100;
+    const avgHealth = Math.round(this.myPlants.reduce((sum, p) => sum + (p.healthScore || 80), 0) / this.myPlants.length);
 
     if (vitalityDisplay) vitalityDisplay.textContent = `${avgHealth}%`;
     if (countDisplay) countDisplay.textContent = `${this.myPlants.length} Plants`;
@@ -490,72 +482,104 @@ class FloraApp {
 
   renderDiagnosis(plant) {
     this.lastDiagnosedPlant = plant;
-    document.getElementById("diag-plant-name").textContent = plant.commonName || "Plant Diagnosed";
-    document.getElementById("diag-botanical-name").textContent = plant.botanicalName || "Botanical Profile";
-    document.getElementById("diag-health-number").textContent = `${plant.healthScore || 70}%`;
-    document.getElementById("diag-condition-title").textContent = plant.condition || "Identified Condition";
-    document.getElementById("diag-cause-desc").textContent = plant.cause || "Analysis indicates stress factors in lighting or root aeration.";
 
-    const petAlert = document.getElementById("diag-pet-alert");
-    if (petAlert) {
-      if (plant.petToxicity && plant.petToxicity.isToxic) {
-        petAlert.className = "diag-pill-alert toxic";
-        petAlert.innerHTML = `⚠️ <strong>Pet Warning:</strong> ${plant.petToxicity.notes || "Toxic to pets"}`;
+    const nameEl = document.getElementById("diag-plant-name");
+    if (nameEl) nameEl.textContent = plant.commonName || "Monstera Deliciosa";
+
+    const score = plant.healthScore || 72;
+    const healthNumEl = document.getElementById("diag-health-number");
+    if (healthNumEl) healthNumEl.textContent = `${score}%`;
+
+    const statusBadge = document.getElementById("diag-status-badge");
+    const statusDot = document.getElementById("diag-status-dot");
+    if (statusBadge && statusDot) {
+      if (score >= 85) {
+        statusBadge.textContent = "Thriving & Healthy";
+        statusBadge.parentElement.style.color = "#00F076";
+        statusBadge.parentElement.style.borderColor = "rgba(0, 240, 118, 0.35)";
+        statusBadge.parentElement.style.background = "rgba(0, 240, 118, 0.12)";
+        statusDot.style.background = "#00F076";
+      } else if (score >= 60) {
+        statusBadge.textContent = "Requires Care";
+        statusBadge.parentElement.style.color = "#FFE600";
+        statusBadge.parentElement.style.borderColor = "rgba(255, 230, 0, 0.35)";
+        statusBadge.parentElement.style.background = "rgba(255, 230, 0, 0.12)";
+        statusDot.style.background = "#FFE600";
       } else {
-        petAlert.className = "diag-pill-alert safe";
-        petAlert.innerHTML = `🐾 <strong>Pet-Safe Certified:</strong> Non-toxic to cats and dogs.`;
+        statusBadge.textContent = "Critical Infection";
+        statusBadge.parentElement.style.color = "#FF5555";
+        statusBadge.parentElement.style.borderColor = "rgba(255, 85, 85, 0.35)";
+        statusBadge.parentElement.style.background = "rgba(255, 85, 85, 0.12)";
+        statusDot.style.background = "#FF5555";
       }
     }
 
-    const rxContainer = document.getElementById("diag-rx-steps");
-    rxContainer.innerHTML = "";
-    const rxSteps = plant.rx || [
-      { step: "Aerate Root Zone", action: "Allow topsoil to dry before watering." },
-      { step: "Optimize Light", action: "Move to bright indirect light." },
-      { step: "Foliar Feed", action: "Mist leaves with dilute micronutrient solution." }
+    const condTitle = document.getElementById("diag-condition-title");
+    if (condTitle) condTitle.textContent = plant.condition || "Leaf Rust (Puccinia)";
+
+    const causeDesc = document.getElementById("diag-cause-desc");
+    if (causeDesc) causeDesc.textContent = plant.cause || "Excess foliage moisture and poor ventilation allowed fungal spores to colonize leaf tissue.";
+
+    const rx = plant.rx || [
+      { step: "Adjust Watering", action: "Pause watering for 4–5 days. Wait until the top 2 inches of soil are dry." },
+      { step: "Optimize Lighting & Air", action: "Relocate to bright indirect sunlight and improve room ventilation to dry leaf surfaces." },
+      { step: "Clinical Treatment Protocol", action: "Wipe affected foliage with dilute copper fungicide or organic neem oil spray." }
     ];
 
-    const isPro = purchasesManager.isPro;
+    const waterAction = document.getElementById("diag-action-water");
+    if (waterAction) waterAction.textContent = rx[0]?.action || "Pause watering for 4–5 days. Wait until the top 2 inches of soil are dry.";
+
+    const lightAction = document.getElementById("diag-action-light");
+    if (lightAction) lightAction.textContent = rx[1]?.action || "Relocate to bright indirect sunlight and improve room ventilation to dry leaf surfaces.";
+
+    const treatmentAction = document.getElementById("diag-action-treatment");
+    const treatmentBlock = document.getElementById("diag-step-treatment");
     const lockedBanner = document.getElementById("diag-pro-locked-banner");
-    if (lockedBanner) {
-      lockedBanner.style.display = isPro ? "none" : "flex";
+    const isPro = purchasesManager.isPro;
+
+    if (treatmentAction) {
+      if (isPro) {
+        treatmentAction.textContent = rx[2]?.action || "Wipe affected foliage with dilute copper fungicide or organic neem oil spray.";
+        if (treatmentBlock) {
+          treatmentBlock.classList.remove("locked-step");
+          treatmentBlock.onclick = null;
+        }
+      } else {
+        treatmentAction.textContent = "Clinical dosage schedule and fungicide mixing ratios are exclusive to Flora Pro.";
+        if (treatmentBlock) {
+          treatmentBlock.classList.add("locked-step");
+          treatmentBlock.onclick = () => this.showPaywall("diagnosis_treatment_step");
+        }
+      }
     }
 
-    rxSteps.forEach((r, idx) => {
-      const step = document.createElement("div");
-      const isLocked = !isPro && idx > 0;
-      step.className = `rx-item ${isLocked ? "locked" : ""}`;
-      step.innerHTML = `
-        <div class="rx-num">${idx + 1}</div>
-        <div>
-          <div class="rx-title">${r.step} ${isLocked ? "🔒" : ""}</div>
-          <div class="rx-action">${isLocked ? "Step dosages, fungicide dilution, and clinical recovery schedule are Flora Pro exclusive." : r.action}</div>
-        </div>
-      `;
-      if (isLocked) {
-        step.style.cursor = "pointer";
-        step.addEventListener("click", () => this.showPaywall("rx_step_click"));
+    if (lockedBanner) {
+      lockedBanner.style.display = isPro ? "none" : "flex";
+      const unlockBtn = document.getElementById("btn-unlock-rx-pro");
+      if (unlockBtn) {
+        unlockBtn.onclick = () => this.showPaywall("diagnosis_treatment_banner");
       }
-      rxContainer.appendChild(step);
-    });
+    }
 
     const addBtn = document.getElementById("add-to-garden-btn");
-    addBtn.onclick = () => {
-      this.myPlants.unshift({
-        id: `g_${Date.now()}`,
-        nickname: plant.commonName,
-        commonName: plant.commonName,
-        botanicalName: plant.botanicalName,
-        icon: "🪴",
-        healthScore: plant.healthScore || 75,
-        nextWaterDays: plant.wateringInterval || 7,
-        wateringInterval: plant.wateringInterval || 7,
-        petToxicity: plant.petToxicity
-      });
-      this.saveGarden();
-      this.renderGardenList();
-      this.showScreen("dashboard");
-    };
+    if (addBtn) {
+      addBtn.onclick = () => {
+        this.myPlants.unshift({
+          id: `g_${Date.now()}`,
+          nickname: plant.commonName,
+          commonName: plant.commonName,
+          botanicalName: plant.botanicalName,
+          icon: plant.icon || "🪴",
+          healthScore: plant.healthScore || 75,
+          nextWaterDays: plant.wateringInterval || 7,
+          wateringInterval: plant.wateringInterval || 7,
+          petToxicity: plant.petToxicity
+        });
+        this.saveGarden();
+        this.renderGardenList();
+        this.showScreen("dashboard");
+      };
+    }
 
     this.showScreen("diagnosis");
   }

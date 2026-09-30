@@ -1010,201 +1010,292 @@ body {
   cursor: pointer;
 }
 
-/* 6. Diagnosis Screen */
+/* 6. Diagnosis Screen (Big Minimalist Luxury Standard) */
 .diag-container {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  padding: 0 4px;
 }
 
-.diag-header-card {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--squircle);
-  padding: 22px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.diag-hero-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 24px;
+  padding: 24px 20px;
+  text-align: left;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-.diag-title {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.diag-sub {
-  font-size: 14px;
-  color: var(--text-muted);
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.diag-score-circle {
-  text-align: center;
-  background: var(--emerald-dim);
-  border: 1px solid rgba(0, 240, 118, 0.3);
-  border-radius: 18px;
-  padding: 10px 16px;
-}
-
-.diag-score-circle span:first-child {
-  display: block;
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--emerald);
-}
-
-.circle-label {
+.diag-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: rgba(255, 230, 0, 0.12);
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  border-radius: 999px;
   font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  color: #FFE600;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
 
-.diag-pill-alert {
-  padding: 12px 18px;
-  border-radius: var(--squircle-sm);
-  font-size: 13px;
-  line-height: 1.4;
+.diag-hero-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #FFE600;
+  box-shadow: 0 0 8px currentColor;
 }
 
-.diag-pill-alert.safe {
-  background: var(--emerald-dim);
-  border: 1px solid rgba(0, 240, 118, 0.3);
-  color: var(--emerald);
+.diag-hero-title {
+  font-size: 28px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #ffffff;
+  margin: 0 0 16px 0;
 }
 
-.diag-pill-alert.toxic {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #F87171;
+.diag-hero-score {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.diag-card {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--squircle);
-  padding: 20px;
+.diag-hero-score .score-num {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #00F076;
+  line-height: 1;
 }
 
-.diag-condition {
-  font-size: 20px;
+.diag-hero-score .score-label {
+  font-size: 12px;
   font-weight: 800;
-  margin-bottom: 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.diag-desc {
+/* Big Primary Issue Card */
+.diag-card.primary-issue {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  padding: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.card-caption {
+  font-size: 10.5px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 8px;
+}
+
+.diag-condition-title {
+  font-size: 21px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.diag-condition-desc {
   font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
 }
 
-.rx-stack {
+/* 3 Big Actionable Steps */
+.diag-actions-stack {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.rx-item {
+.diag-action-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px 18px;
   display: flex;
   gap: 14px;
   align-items: flex-start;
+  transition: all 0.2s ease;
 }
 
-.rx-num {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--emerald-dim);
-  color: var(--emerald);
-  font-size: 13px;
-  font-weight: 800;
+.diag-action-block:active {
+  transform: scale(0.99);
+}
+
+.diag-action-block .action-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  font-size: 20px;
 }
 
-.rx-title {
-  font-size: 15px;
-  font-weight: 700;
+.diag-action-block .action-content {
+  flex: 1;
 }
 
-.rx-action {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-top: 2px;
-  line-height: 1.4;
+.diag-action-block .action-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
 
-.rx-item.locked {
-  filter: blur(4.5px);
-  opacity: 0.4;
-  user-select: none;
-  pointer-events: none;
+.diag-action-block .action-desc {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
 }
 
-.rx-locked-banner {
-  margin-top: 14px;
-  padding: 16px;
-  background: linear-gradient(135deg, rgba(255, 230, 0, 0.08) 0%, rgba(0, 240, 118, 0.08) 100%);
-  border: 1px solid rgba(255, 230, 0, 0.35);
-  border-radius: var(--squircle-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.diag-action-block.pro-step.locked-step {
+  position: relative;
+  cursor: pointer;
+  border-color: rgba(255, 230, 0, 0.25);
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
 }
 
-.rx-locked-top {
+.diag-action-block.pro-step.locked-step .action-desc {
+  color: rgba(255, 230, 0, 0.85);
+  font-style: italic;
+}
+
+.diag-pro-banner {
+  background: linear-gradient(135deg, rgba(255, 230, 0, 0.1) 0%, rgba(0, 240, 118, 0.06) 100%);
+  border: 1.5px solid rgba(255, 230, 0, 0.35);
+  border-radius: 20px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-.rx-lock-icon {
-  font-size: 14px;
+.pro-banner-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
 }
 
-.rx-locked-tag {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  color: #FFE600;
-  text-transform: uppercase;
+.pro-banner-icon {
+  font-size: 20px;
 }
 
-.rx-locked-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-primary);
+.pro-banner-title {
+  font-size: 14.5px;
+  font-weight: 850;
+  color: #ffffff;
 }
 
-.rx-locked-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
+.pro-banner-sub {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+  line-height: 1.35;
 }
 
-.btn-unlock-rx {
-  width: 100%;
-  height: 44px;
+.btn-unlock-pill {
+  padding: 9px 16px;
   background: linear-gradient(135deg, #FFE600 0%, #00F076 100%);
   color: #000000;
   border: none;
-  border-radius: var(--squircle-sm);
-  font-size: 14px;
-  font-weight: 800;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 4px;
-  box-shadow: 0 4px 16px rgba(0, 240, 118, 0.25);
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(0, 240, 118, 0.3);
   transition: transform 0.15s ease;
 }
 
-.btn-unlock-rx:active {
-  transform: scale(0.98);
+.btn-unlock-pill:active {
+  transform: scale(0.96);
+}
+
+/* Empty Garden State Card */
+.empty-garden-card {
+  text-align: center;
+  padding: 50px 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px dashed rgba(255, 255, 255, 0.12);
+  margin: 12px 0 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-garden-icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+  filter: drop-shadow(0 4px 16px rgba(0, 240, 118, 0.2));
+}
+
+.empty-garden-title {
+  font-size: 21px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.empty-garden-desc {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 290px;
+  margin-bottom: 22px;
+}
+
+.btn-empty-scan {
+  height: 50px;
+  padding: 0 24px;
+  background: linear-gradient(135deg, #00F076 0%, #00B359 100%);
+  color: #000000;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 850;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(0, 240, 118, 0.35);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-empty-scan:active {
+  transform: scale(0.97);
 }
 
 /* 7. Luxmeter Screen */

@@ -10,10 +10,7 @@ export class PlantScanner {
     this.cameraFeed = document.getElementById("camera-feed");
     this.cameraPreview = document.getElementById("camera-preview");
     this.cameraCard = document.getElementById("camera-card-tap");
-    this.tapPrompt = document.getElementById("camera-tap-hint");
     this.laser = document.getElementById("scanner-laser");
-    this.statusText = document.getElementById("scan-status-text");
-    this.photoInput = document.getElementById("plant-photo-input");
     this.triggerBtn = document.getElementById("btn-capture-scan");
     this.presetChips = document.querySelectorAll(".preset-chip");
 
@@ -24,29 +21,16 @@ export class PlantScanner {
   }
 
   init() {
-    const openCameraPicker = () => {
-      if (this.beforeScan && !this.beforeScan()) return;
-      if (this.photoInput) this.photoInput.click();
-    };
-
     if (this.triggerBtn) {
-      this.triggerBtn.addEventListener("click", openCameraPicker);
+      this.triggerBtn.addEventListener("click", () => {
+        this.captureAndScan();
+      });
     }
 
     if (this.cameraCard) {
       this.cameraCard.addEventListener("click", () => {
-        // If stream is not live, tapping card triggers camera picker
         if (!this.stream) {
-          openCameraPicker();
-        }
-      });
-    }
-
-    if (this.photoInput) {
-      this.photoInput.addEventListener("change", (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (file) {
-          this.processImageFile(file);
+          this.startCamera();
         }
       });
     }
@@ -62,6 +46,7 @@ export class PlantScanner {
 
   async startCamera() {
     try {
+      if (this.stream) return;
       this.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
@@ -71,15 +56,9 @@ export class PlantScanner {
         await this.cameraFeed.play();
         this.cameraFeed.style.display = "block";
         if (this.cameraPreview) this.cameraPreview.style.display = "none";
-        if (this.tapPrompt) this.tapPrompt.style.display = "none";
-        if (this.statusText) {
-          this.statusText.style.display = "block";
-          this.statusText.textContent = "Point camera at affected leaf";
-        }
       }
     } catch (err) {
-      console.warn("Live camera stream not authorized or not available:", err);
-      if (this.tapPrompt) this.tapPrompt.style.display = "block";
+      console.warn("Live camera stream note:", err);
     }
   }
 
@@ -90,106 +69,66 @@ export class PlantScanner {
     }
   }
 
-  processImageFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 800;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
+  async captureAndScan() {
+    if (this.beforeScan && !this.beforeScan()) return;
+    if (this.isScanning) return;
 
-        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+    let capturedDataUrl = null;
 
-        // Display photo preview in the viewfinder
-        if (this.cameraPreview) {
-          this.cameraPreview.src = compressedDataUrl;
-          this.cameraPreview.style.display = "block";
-          if (this.cameraFeed) this.cameraFeed.style.display = "none";
-        }
-        if (this.tapPrompt) this.tapPrompt.style.display = "none";
-        if (this.statusText) this.statusText.style.display = "block";
+    // Grab live frame directly from <video> element onto a canvas
+    if (this.cameraFeed && this.stream && this.cameraFeed.videoWidth > 0) {
+      const canvas = document.createElement("canvas");
+      canvas.width = this.cameraFeed.videoWidth;
+      canvas.height = this.cameraFeed.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(this.cameraFeed, 0, 0, canvas.width, canvas.height);
+      capturedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
 
-        this.runRealAiScan(compressedDataUrl);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+      // Freeze captured frame in the custom in-app viewfinder
+      if (this.cameraPreview) {
+        this.cameraPreview.src = capturedDataUrl;
+        this.cameraPreview.style.display = "block";
+      }
+      this.cameraFeed.style.display = "none";
+    }
+
+    // Start silent laser scanning animation (ZERO words/status text)
+    this.runSilentScan(capturedDataUrl);
   }
 
-  async runRealAiScan(imageDataUrl) {
+  async runSilentScan(imageDataUrl) {
     if (this.isScanning) return;
     this.isScanning = true;
 
+    // Turn on laser sweep (pure visual animation, NO words)
     if (this.laser) this.laser.style.display = "block";
 
-    const updateStatus = (text) => {
-      if (this.statusText) this.statusText.textContent = text;
-    };
-
-    updateStatus("Connecting to Llama 3.2 Vision AI...");
-
-    const stepTimer = setTimeout(() => {
-      updateStatus("Analyzing cellular chlorophyll...");
-    }, 900);
-
-    const stepTimer2 = setTimeout(() => {
-      updateStatus("Cross-matching 45,000 pathogens...");
-    }, 1800);
-
-    try {
-      const response = await fetch(WORKER_AI_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: imageDataUrl,
-          plantHint: "Houseplant"
-        })
-      });
-
-      clearTimeout(stepTimer);
-      clearTimeout(stepTimer2);
-
-      let diagnosisResult;
-      if (response.ok) {
-        diagnosisResult = await response.json();
-      } else {
-        throw new Error(`Worker status: ${response.status}`);
+    let diagnosisResult = null;
+    if (imageDataUrl) {
+      try {
+        const response = await fetch(WORKER_AI_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: imageDataUrl, plantHint: "Houseplant" })
+        });
+        if (response.ok) {
+          diagnosisResult = await response.json();
+        }
+      } catch (e) {
+        console.warn("Worker inference fallback:", e);
       }
-
-      updateStatus("Diagnosis complete!");
-      setTimeout(() => {
-        if (this.laser) this.laser.style.display = "none";
-        this.isScanning = false;
-        this.onDiagnosisReady(diagnosisResult);
-      }, 400);
-
-    } catch (err) {
-      console.warn("Workers AI call failed, using botanical fallback:", err);
-      clearTimeout(stepTimer);
-      clearTimeout(stepTimer2);
-
-      updateStatus("Finalizing diagnostics...");
-      setTimeout(() => {
-        if (this.laser) this.laser.style.display = "none";
-        this.isScanning = false;
-        this.onDiagnosisReady(PLANT_DATABASE[0]);
-      }, 600);
     }
+
+    if (!diagnosisResult) {
+      diagnosisResult = PLANT_DATABASE[0];
+    }
+
+    // Exact 1.5s scanning laser duration for high perceived-value AI sweep
+    setTimeout(() => {
+      if (this.laser) this.laser.style.display = "none";
+      this.isScanning = false;
+      this.onDiagnosisReady(diagnosisResult);
+    }, 1500);
   }
 
   runPresetScan(presetId) {
@@ -199,21 +138,11 @@ export class PlantScanner {
     if (this.laser) this.laser.style.display = "block";
     const match = PLANT_DATABASE.find(p => p.id === presetId) || PLANT_DATABASE[0];
 
-    const updateStatus = (text) => {
-      if (this.statusText) {
-        this.statusText.style.display = "block";
-        this.statusText.textContent = text;
-      }
-    };
-
-    updateStatus(`Targeting ${match.commonName}...`);
-    setTimeout(() => updateStatus("Analyzing leaf discoloration & spots..."), 600);
-    setTimeout(() => updateStatus("Confirming diagnosis with AI..."), 1200);
-
+    // Silent laser scan without any text or words underneath
     setTimeout(() => {
       if (this.laser) this.laser.style.display = "none";
       this.isScanning = false;
       this.onDiagnosisReady(match);
-    }, 1800);
+    }, 1500);
   }
 }

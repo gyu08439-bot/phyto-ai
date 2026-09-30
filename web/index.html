@@ -166,16 +166,12 @@
           <div class="reticle-corner br"></div>
           <div id="scanner-laser" class="reticle-laser" style="display: none;"></div>
         </div>
-        <div id="camera-tap-hint" class="camera-tap-prompt">📷 Tap to Open Camera / Photo</div>
-        <div id="scan-status-text" class="camera-status" style="display: none;">Point camera at affected leaf</div>
       </div>
 
       <div class="scanner-bottom">
-        <input type="file" id="plant-photo-input" accept="image/*" capture="environment" style="display: none;">
-        <button id="btn-capture-scan" class="btn-shutter">
+        <button id="btn-capture-scan" class="btn-shutter" aria-label="Scan Plant">
           <div class="shutter-inner"></div>
         </button>
-        <div class="shutter-hint">Tap to scan or choose photo</div>
 
         <div class="demo-pills-wrap">
           <div class="demo-label">Instant Demos:</div>
@@ -189,54 +185,81 @@
       </div>
     </section>
 
-    <!-- 6. DIAGNOSIS SCREEN -->
+    <!-- 6. DIAGNOSIS SCREEN (Big Minimalist Luxury Standard) -->
     <section id="screen-diagnosis" class="screen">
       <div class="scanner-top">
         <button id="back-from-diagnosis" class="btn-back">← Back</button>
-        <div class="screen-title">Medical Report</div>
+        <div class="screen-title">Diagnosis</div>
         <div style="width: 44px;"></div>
       </div>
 
       <div class="diag-container">
-        <div class="diag-header-card">
-          <div class="diag-names">
-            <h1 id="diag-plant-name" class="diag-title">Monstera Deliciosa</h1>
-            <div id="diag-botanical-name" class="diag-sub">Monstera deliciosa</div>
+        <!-- Big Hero Plant Header -->
+        <div class="diag-hero-card">
+          <div class="diag-hero-badge">
+            <span class="diag-hero-dot" id="diag-status-dot"></span>
+            <span id="diag-status-badge">Requires Care</span>
           </div>
-          <div class="diag-score-circle">
-            <span id="diag-health-number">72%</span>
-            <span class="circle-label">Vitality</span>
+          <h1 id="diag-plant-name" class="diag-hero-title">Monstera Deliciosa</h1>
+          <div class="diag-hero-score">
+            <span class="score-num" id="diag-health-number">72%</span>
+            <span class="score-label">Health Index</span>
           </div>
         </div>
 
-        <div id="diag-pet-alert" class="diag-pill-alert safe">
-          🐾 <strong>Pet-Safe:</strong> Non-toxic to cats & dogs.
+        <!-- Big Primary Issue Card -->
+        <div class="diag-card primary-issue">
+          <div class="card-caption">IDENTIFIED CONDITION</div>
+          <h2 id="diag-condition-title" class="diag-condition-title">Leaf Rust (Puccinia)</h2>
+          <p id="diag-cause-desc" class="diag-condition-desc">Excess foliage moisture and poor ventilation allowed fungal spores to colonize leaf tissue.</p>
         </div>
 
-        <div class="diag-card">
-          <div class="card-caption">DIAGNOSIS</div>
-          <h2 id="diag-condition-title" class="diag-condition">Leaf Rust (Puccinia)</h2>
-          <p id="diag-cause-desc" class="diag-desc">Excess foliage moisture combined with poor ventilation.</p>
-        </div>
+        <!-- 3 Big Actionable Steps -->
+        <div class="diag-actions-stack">
+          <div class="card-caption">ACTION PROTOCOL</div>
 
-        <div class="diag-card">
-          <div class="card-caption">TREATMENT PROTOCOL</div>
-          <div id="diag-rx-steps" class="rx-stack"></div>
-
-          <div id="diag-pro-locked-banner" class="rx-locked-banner" style="display: none;">
-            <div class="rx-locked-top">
-              <span class="rx-lock-icon">🔒</span>
-              <span class="rx-locked-tag">PRO PROTOCOL</span>
+          <!-- Step 1: Watering -->
+          <div class="diag-action-block">
+            <div class="action-icon">💧</div>
+            <div class="action-content">
+              <div class="action-name">1. Adjust Watering</div>
+              <p id="diag-action-water" class="action-desc">Pause watering for 4–5 days. Wait until the top 2 inches of soil are dry.</p>
             </div>
-            <div class="rx-locked-title">Unlock Steps 2 & 3: Clinical Cure Plan</div>
-            <div class="rx-locked-desc">Immediate action, recovery timeline, and fungicide/fertilizer dosing guidelines are exclusive to Flora Pro.</div>
-            <button id="btn-unlock-rx-pro" class="btn-unlock-rx">
-              <span>⚡ Unlock Full Treatment Protocol</span>
-            </button>
+          </div>
+
+          <!-- Step 2: Lighting & Environment -->
+          <div class="diag-action-block">
+            <div class="action-icon">☀️</div>
+            <div class="action-content">
+              <div class="action-name">2. Optimize Lighting & Air</div>
+              <p id="diag-action-light" class="action-desc">Relocate to bright indirect sunlight and improve room ventilation to dry leaf surfaces.</p>
+            </div>
+          </div>
+
+          <!-- Step 3: Foliar Treatment (Pro) -->
+          <div class="diag-action-block pro-step" id="diag-step-treatment">
+            <div class="action-icon">🌿</div>
+            <div class="action-content">
+              <div class="action-name">3. Clinical Treatment Protocol</div>
+              <p id="diag-action-treatment" class="action-desc">Wipe affected foliage with dilute copper fungicide or organic neem oil spray.</p>
+            </div>
+          </div>
+
+          <!-- Pro Lock Banner if not subscribed -->
+          <div id="diag-pro-locked-banner" class="diag-pro-banner" style="display: none;">
+            <div class="pro-banner-info">
+              <span class="pro-banner-icon">🔒</span>
+              <div>
+                <div class="pro-banner-title">Unlock Full Recovery Timeline</div>
+                <div class="pro-banner-sub">Dosage calculations & fungicide schedule are exclusive to Flora Pro.</div>
+              </div>
+            </div>
+            <button id="btn-unlock-rx-pro" class="btn-unlock-pill">Unlock Pro</button>
           </div>
         </div>
 
-        <button id="add-to-garden-btn" class="btn-primary" style="margin-top: 10px; margin-bottom: 30px;">
+        <!-- Big Primary CTA -->
+        <button id="add-to-garden-btn" class="btn-primary" style="margin-top: 8px; margin-bottom: 30px;">
           <span>+ Add to My Garden</span>
         </button>
       </div>
