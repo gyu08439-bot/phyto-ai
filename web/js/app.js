@@ -290,12 +290,24 @@ class FloraApp {
         }
         return true;
       },
-      onDiagnosisReady: (plant) => {
+      onDiagnosisReady: (result) => {
+        // If image is not a plant (e.g. asphalt, floor, wall, animal, face)
+        if (result && result.isPlant === false) {
+          // Resume camera viewfinder if frozen
+          if (this.scanner.cameraPreview) this.scanner.cameraPreview.style.display = "none";
+          if (this.scanner.cameraFeed) this.scanner.cameraFeed.style.display = "block";
+          this.showNotPlantNotification(
+            result.errorTitle || "No Plant Detected",
+            result.errorMessage || "Please aim your camera directly at a live plant leaf."
+          );
+          return;
+        }
+
         if (!purchasesManager.isPro) {
           this.freeScansUsed++;
           localStorage.setItem("flora_free_scans_used", this.freeScansUsed);
         }
-        this.renderDiagnosis(plant);
+        this.renderDiagnosis(result);
       }
     });
 
@@ -313,6 +325,33 @@ class FloraApp {
     if (unlockRxBtn) {
       unlockRxBtn.addEventListener("click", () => this.showPaywall("rx_unlock"));
     }
+  }
+
+  showNotPlantNotification(title, message) {
+    const existing = document.getElementById("not-plant-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "not-plant-toast";
+    toast.className = "not-plant-card";
+    toast.innerHTML = `
+      <div class="not-plant-header">
+        <span class="not-plant-icon">⚠️</span>
+        <span class="not-plant-title">${title}</span>
+      </div>
+      <div class="not-plant-msg">${message}</div>
+      <button class="not-plant-dismiss-btn" id="btn-dismiss-toast">Got it · Aim at Leaf</button>
+    `;
+
+    document.getElementById("screen-scanner")?.appendChild(toast);
+
+    toast.querySelector("#btn-dismiss-toast")?.addEventListener("click", () => {
+      toast.remove();
+    });
+
+    setTimeout(() => {
+      if (toast.parentElement) toast.remove();
+    }, 7000);
   }
 
   initLightMeter() {

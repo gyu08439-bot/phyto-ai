@@ -109,18 +109,22 @@ export class PlantScanner {
         const response = await fetch(WORKER_AI_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: imageDataUrl, plantHint: "Houseplant" })
+          body: JSON.stringify({ image: imageDataUrl })
         });
         if (response.ok) {
           diagnosisResult = await response.json();
         }
       } catch (e) {
-        console.warn("Worker inference fallback:", e);
+        console.warn("Worker inference error:", e);
       }
     }
 
     if (!diagnosisResult) {
-      diagnosisResult = PLANT_DATABASE[0];
+      diagnosisResult = {
+        isPlant: false,
+        errorTitle: "Unable to Analyze",
+        errorMessage: "Network connection timed out. Please check your connection and point the camera at a live plant leaf."
+      };
     }
 
     // Exact 1.5s scanning laser duration for high perceived-value AI sweep

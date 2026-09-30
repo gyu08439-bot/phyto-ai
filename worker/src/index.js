@@ -116,71 +116,62 @@ export default {
           base64Data = base64Data.split(",")[1];
         }
 
-        const binaryString = atob(base64Data);
-        const imageBytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          imageBytes[i] = binaryString.charCodeAt(i);
+        let parsedData = null;
+
+        // 1. Primary AI Vision Engine: OpenRouter (Google Gemini 2.0 Flash)
+        if (env.OPENROUTER_API_KEY) {
+          try {
+            parsedData = await callOpenRouter(base64Data, env.OPENROUTER_API_KEY);
+          } catch (orErr) {
+            console.warn("OpenRouter call failed, attempting Cloudflare Workers AI fallback:", orErr);
+          }
         }
 
-        const prompt = `You are Flora AI, a world-renowned master botanist and plant pathologist.
-Analyze this plant photograph carefully. Identify the species, health status, and any diseases, pests, nutrient deficiencies, or watering issues.
+        // 2. Secondary Fallback: Cloudflare Workers AI (Llama 3.2 Vision)
+        if (!parsedData && env.AI) {
+          try {
+            const binaryString = atob(base64Data);
+            const imageBytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              imageBytes[i] = binaryString.charCodeAt(i);
+            }
 
-You MUST respond ONLY with a valid, parseable JSON object without any preamble, markdown fences, or conversational text.
-Use this EXACT JSON schema:
-{
-  "commonName": "Common Plant Name",
-  "botanicalName": "Botanical Latin Name",
-  "healthScore": 75,
-  "condition": "Short medical condition title",
-  "severity": "Mild | Moderate | Critical",
-  "cause": "2-3 sentences explaining biological root cause of visible symptoms.",
-  "rx": [
-    { "step": "Step 1 Title", "action": "Actionable instructions for immediate treatment" },
-    { "step": "Step 2 Title", "action": "Actionable instructions for care adjustment" },
-    { "step": "Step 3 Title", "action": "Long-term prevention protocol" }
-  ],
-  "petToxicity": {
-    "isToxic": true,
-    "notes": "Mildly toxic to cats and dogs or Completely Pet-Safe"
-  },
-  "wateringInterval": 7,
-  "lightRequirement": "Bright Indirect (2,500 - 5,000 Lux)"
-}`;
+            const aiResult = await env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct", {
+              prompt: BOTANICAL_SYSTEM_PROMPT,
+              image: [...imageBytes],
+              max_tokens: 800
+            });
+            let rawText = aiResult.response || (typeof aiResult === "string" ? aiResult : JSON.stringify(aiResult));
+            rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              parsedData = JSON.parse(jsonMatch[0]);
+            }
+          } catch (cfErr) {
+            console.warn("Workers AI error:", cfErr);
+          }
+        }
 
-        let aiResult;
-        try {
-          aiResult = await env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct", {
-            prompt: prompt,
-            image: [...imageBytes],
-            max_tokens: 1024
-          });
-        } catch (aiErr) {
-          console.error("Workers AI error:", aiErr);
-          return new Response(JSON.stringify(getSmartFallback(body.plantHint)), {
+        // 3. Graceful safety handling (never call random objects a plant!)
+        if (!parsedData) {
+          return new Response(JSON.stringify({
+            isPlant: false,
+            errorTitle: "Scan Unavailable",
+            errorMessage: "AI vision service is momentarily busy. Please aim at the leaf and try again in a moment."
+          }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" }
           });
-        }
-
-        let rawText = aiResult.response || (typeof aiResult === "string" ? aiResult : JSON.stringify(aiResult));
-        rawText = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-        let parsedData;
-        try {
-          parsedData = JSON.parse(rawText);
-        } catch (parseErr) {
-          const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            parsedData = JSON.parse(jsonMatch[0]);
-          } else {
-            parsedData = getSmartFallback(body.plantHint);
-          }
         }
 
         return new Response(JSON.stringify(parsedData), {
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       } catch (err) {
-        return new Response(JSON.stringify({ error: err.message, fallback: getSmartFallback() }), {
+        return new Response(JSON.stringify({
+          isPlant: false,
+          errorTitle: "Scan Error",
+          errorMessage: "Unable to process image. Please try again with clear lighting."
+        }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -191,24 +182,79 @@ Use this EXACT JSON schema:
   }
 };
 
-function getSmartFallback(hint = "") {
-  return {
-    commonName: hint || "Swiss Cheese Plant",
-    botanicalName: "Monstera Deliciosa",
-    healthScore: 72,
-    condition: "Chlorosis & Moisture Stress",
-    severity: "Moderate",
-    cause: "Visible leaf margin discoloration caused by root zone moisture saturation and suboptimal mineral uptake.",
-    rx: [
-      { step: "Aerate & Dry Root Ball", action: "Allow top 2-3 inches of substrate to completely dry out before re-watering." },
-      { step: "Foliar Micronutrient Feed", action: "Mist leaves with dilute chelated iron and magnesium solution." },
-      { step: "Optimize Photoperiod", action: "Reposition to bright indirect light (2,500 - 4,000 Lux) away from drafts." }
+const BOTANICAL_SYSTEM_PROMPT = `You are Flora AI, an elite plant pathologist and computer vision diagnostician.
+
+CRITICAL MANDATE - OBJECT VALIDATION FIRST:
+Before diagnosing, inspect the photograph carefully. Does this image actually show a real plant, leaf, branch, or flower?
+- If the image contains NO plant (e.g. asphalt, pavement, road, floor, wall, animal, human face, shoes, car, furniture, food, screen, darkness, or random non-plant objects):
+  You MUST return ONLY this JSON:
+  {
+    "isPlant": false,
+    "errorTitle": "No Plant Detected",
+    "errorMessage": "This image appears to show non-plant material (e.g. asphalt, floor, or object). Please aim your camera directly at a real plant leaf or stem."
+  }
+
+- If and ONLY IF a plant, leaf, or flower is genuinely present:
+  Return ONLY this JSON:
+  {
+    "isPlant": true,
+    "commonName": "Common Plant Name (e.g. Monstera Deliciosa)",
+    "botanicalName": "Botanical Latin Name (e.g. Monstera deliciosa)",
+    "healthScore": 75,
+    "condition": "Short medical condition title (e.g. Early Leaf Rust)",
+    "severity": "Mild | Moderate | Critical",
+    "cause": "2 concise sentences explaining the biological root cause of visible symptoms.",
+    "rx": [
+      { "step": "1. Adjust Watering", "action": "Actionable instructions for immediate treatment" },
+      { "step": "2. Optimize Lighting & Air", "action": "Actionable instructions for care adjustment" },
+      { "step": "3. Clinical Treatment Protocol", "action": "Detailed clinical formula and fungicide/fertilizer dosing" }
     ],
-    petToxicity: {
-      isToxic: true,
-      notes: "Contains insoluble calcium oxalate crystals; keep away from curious pets."
+    "wateringInterval": 7,
+    "lightRequirement": "Bright Indirect (2,500 - 5,000 Lux)"
+  }
+
+You MUST respond ONLY with the valid, parseable JSON object without markdown fences or preamble.`;
+
+async function callOpenRouter(imageBase64, apiKey) {
+  const formattedUrl = imageBase64.startsWith("data:")
+    ? imageBase64
+    : `data:image/jpeg;base64,${imageBase64}`;
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://floraai.app",
+      "X-Title": "Flora AI",
+      "Content-Type": "application/json"
     },
-    wateringInterval: 8,
-    lightRequirement: "Bright Indirect (2,500 - 4,000 Lux)"
-  };
+    body: JSON.stringify({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: BOTANICAL_SYSTEM_PROMPT },
+            {
+              type: "image_url",
+              image_url: { url: formattedUrl }
+            }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 800,
+      temperature: 0.1
+    })
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`OpenRouter HTTP ${res.status}: ${errText}`);
+  }
+
+  const data = await res.json();
+  const rawText = data.choices?.[0]?.message?.content || "";
+  const clean = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+  return JSON.parse(clean);
 }
