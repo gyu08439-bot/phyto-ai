@@ -96,12 +96,16 @@ else:
 
 print("\n=== CHECKING & LINKING BETA GROUPS ===")
 status, res = api_get(f"https://api.appstoreconnect.apple.com/v1/apps/{APP_ID}/betaGroups")
+bg_ids = []
 if status == 200:
     for bg in res.get("data", []):
         bg_id = bg.get("id")
+        bg_ids.append(bg_id)
         pattr = bg.get("attributes", {})
         group_name = pattr.get('name')
-        print(f"  - Beta Group: ID={bg_id}, Name='{group_name}', isInternalGroup={pattr.get('isInternalGroup')}")
+        is_internal = pattr.get('isInternalGroup')
+        public_link = pattr.get('publicLink')
+        print(f"  - Beta Group: ID={bg_id}, Name='{group_name}', isInternalGroup={is_internal}, publicLink={public_link}")
 
         # Check builds already linked to this beta group
         b_status, b_res = api_get(f"https://api.appstoreconnect.apple.com/v1/betaGroups/{bg_id}/builds")
@@ -124,5 +128,73 @@ if status == 200:
                 }
                 l_status, l_res = api_post(f"https://api.appstoreconnect.apple.com/v1/betaGroups/{bg_id}/relationships/builds", link_payload)
                 print(f"  --> Result: HTTP {l_status} {l_res}")
+
+        # Check testers in this beta group
+        t_status, t_res = api_get(f"https://api.appstoreconnect.apple.com/v1/betaGroups/{bg_id}/betaTesters")
+        testers_in_group = []
+        if t_status == 200:
+            for t in t_res.get("data", []):
+                t_attr = t.get("attributes", {})
+                print(f"    - Tester in '{group_name}': {t_attr.get('email')} ({t_attr.get('firstName')} {t_attr.get('lastName')}, State: {t_attr.get('state')})")
+                testers_in_group.append(t.get("id"))
+        else:
+            print(f"    - Error querying testers in group: HTTP {t_status} {t_res}")
+
+print("\n=== CHECKING ALL BETA TESTERS IN ACCOUNT ===")
+bt_status, bt_res = api_get("https://api.appstoreconnect.apple.com/v1/betaTesters?limit=50")
+all_tester_ids = []
+if bt_status == 200:
+    for t in bt_res.get("data", []):
+        t_id = t.get("id")
+        t_attr = t.get("attributes", {})
+        email = t_attr.get("email")
+        print(f"  - Account Beta Tester: ID={t_id}, Email={email}, Name={t_attr.get('firstName')} {t_attr.get('lastName')}")
+        all_tester_ids.append((t_id, email))
 else:
-    print("Error querying betaGroups:", res)
+    print(f"Error querying betaTesters: HTTP {bt_status} {bt_res}")
+
+print("\n=== CHECKING APP STORE CONNECT USERS / TEAM ===")
+u_status, u_res = api_get("https://api.appstoreconnect.apple.com/v1/users?limit=50")
+team_users = []
+if u_status == 200:
+    for u in u_res.get("data", []):
+        u_id = u.get("id")
+        u_attr = u.get("attributes", {})
+        u_email = u_attr.get("username")
+        roles = u_attr.get("roles")
+        print(f"  - Team User: ID={u_id}, Email={u_email}, Name={u_attr.get('firstName')} {u_attr.get('lastName')}, Roles={roles}")
+        team_users.append((u_id, u_email, u_attr.get('firstName'), u_attr.get('lastName')))
+else:
+    print(f"Error querying users: HTTP {u_status} {u_res}")
+
+# Add testers to Flora AI beta groups
+for bg_id in bg_ids:
+    for t_id, email in all_tester_ids:
+        print(f"Adding tester {email} ({t_id}) to Beta Group {bg_id}...")
+        add_payload = {"data": [{"type": "betaTesters", "id": t_id}]}
+        a_status, a_res = api_post(f"https://api.appstoreconnect.apple.com/v1/betaGroups/{bg_id}/relationships/betaTesters", add_payload)
+        print(f"  --> Result: HTTP {a_status} {a_res}")
+
+    # If team users not in betaTesters, invite them
+    existing_emails = {email.lower() for _, email in all_tester_ids}
+    for _, u_email, fn, ln in team_users:
+        if u_email.lower() not in existing_emails:
+            print(f"Creating beta tester for team user {u_email}...")
+            create_tester_payload = {
+                "data": {
+                    "type": "betaTesters",
+                    "attributes": {
+                        "email": u_email,
+                        "firstName": fn or "Flora",
+                        "lastName": ln or "Tester"
+                    },
+                    "relationships": {
+                        "betaGroups": {
+                            "data": [{"type": "betaGroups", "id": bg_id}]
+                        }
+                    }
+                }
+            }
+            c_status, c_res = api_post("https://api.appstoreconnect.apple.com/v1/betaTesters", create_tester_payload)
+            print(f"  --> Result: HTTP {c_status} {c_res}")
+
