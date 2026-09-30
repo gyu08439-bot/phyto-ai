@@ -73,3 +73,13 @@ if status == 200:
         print(f"  - PreRelease Version: {pattr.get('version')}, Platform: {pattr.get('platform')}")
 else:
     print("Error querying preReleaseVersions:", res)
+
+print("\n=== CHECKING BETA GROUPS ===")
+status, res = api_get(f"https://api.appstoreconnect.apple.com/v1/apps/{APP_ID}/betaGroups")
+if status == 200:
+    for bg in res.get("data", []):
+        bg_id = bg.get("id")
+        pattr = bg.get("attributes", {})
+        print(f"  - Beta Group: Name='{pattr.get('name')}', isInternalGroup={pattr.get('isInternalGroup')}, hasAccess={pattr.get('hasAccess')}")
+else:
+    print("Error querying betaGroups:", res)
