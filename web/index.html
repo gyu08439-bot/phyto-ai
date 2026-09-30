@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Flora AI — Plant Doctor</title>
+  <link rel="icon" type="image/png" href="assets/app_icon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -15,7 +17,10 @@
     <!-- 1. ONBOARDING SCREEN -->
     <section id="screen-quiz" class="screen active">
       <div class="screen-header">
-        <div class="brand">FLORA<span class="text-emerald">AI</span></div>
+        <div class="brand-wrap">
+          <img src="assets/app_icon.png" alt="Flora AI" class="brand-avatar">
+          <div class="brand">FLORA<span class="text-emerald">AI</span></div>
+        </div>
         <div class="stepper-dots">
           <div class="step-dot active"></div>
           <div class="step-dot"></div>
@@ -35,7 +40,7 @@
     <section id="screen-computing" class="screen">
       <div class="computing-center">
         <div class="pulse-ring">
-          <div class="pulse-core"></div>
+          <img src="assets/app_icon.png" alt="Flora AI" class="pulse-avatar">
         </div>
         <div id="computing-percent" class="big-percent">0%</div>
         <h2 class="title-medium">Calibrating AI Model</h2>
@@ -68,7 +73,10 @@
 
       <!-- Main Body Container -->
       <div class="pw-body">
-        <div class="pw-eyebrow">FLORA AI PRO</div>
+        <div class="pw-eyebrow">
+          <img src="assets/app_icon.png" alt="Flora Pro" class="pw-eyebrow-avatar">
+          <span>FLORA AI PRO</span>
+        </div>
         <h1 class="pw-headline">Never Kill Another Plant</h1>
         <p class="pw-subheadline">Instant botanical diagnostics, clinical recovery protocols, and camera luxmeter.</p>
 
@@ -121,9 +129,12 @@
     <!-- 4. GARDEN DASHBOARD SCREEN -->
     <section id="screen-dashboard" class="screen">
       <div class="dashboard-top">
-        <div>
-          <div class="date-label">MY COLLECTION</div>
-          <h1 class="title-large">My Garden</h1>
+        <div class="dashboard-title-group">
+          <img src="assets/app_icon.png" alt="Flora AI" class="dashboard-avatar">
+          <div>
+            <div class="date-label">MY COLLECTION</div>
+            <h1 class="title-large">My Garden</h1>
+          </div>
         </div>
         <button id="btn-open-add-plant" class="btn-add-circle">+</button>
       </div>
@@ -169,9 +180,22 @@
       </div>
 
       <div class="scanner-bottom">
-        <button id="btn-capture-scan" class="btn-shutter" aria-label="Scan Plant">
-          <div class="shutter-inner"></div>
-        </button>
+        <div class="scanner-actions-row">
+          <label for="scanner-file-input" class="btn-gallery-pick" aria-label="Upload photo from library">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="4"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="m21 15-5-5L5 21"/>
+            </svg>
+          </label>
+          <input type="file" id="scanner-file-input" accept="image/*" style="display: none;">
+
+          <button id="btn-capture-scan" class="btn-shutter" aria-label="Scan Plant">
+            <div class="shutter-inner"></div>
+          </button>
+
+          <div style="width: 48px;"></div>
+        </div>
 
         <div class="demo-pills-wrap">
           <div class="demo-label">Instant Demos:</div>
@@ -204,6 +228,18 @@
           <div class="diag-hero-score">
             <span class="score-num" id="diag-health-number">72%</span>
             <span class="score-label">Health Index</span>
+          </div>
+        </div>
+
+        <!-- Pet Toxicity Safety Card -->
+        <div class="diag-card pet-safety" id="diag-pet-card" style="display: none;">
+          <div class="card-caption">PET SAFETY</div>
+          <div class="pet-safety-content">
+            <span class="pet-safety-icon" id="diag-pet-icon">🐾</span>
+            <div>
+              <div class="pet-safety-title" id="diag-pet-title">Pet Friendly</div>
+              <p class="pet-safety-desc" id="diag-pet-desc">Safe for cats and dogs.</p>
+            </div>
           </div>
         </div>
 
@@ -268,15 +304,21 @@
     <!-- 7. LUXMETER SCREEN -->
     <section id="screen-luxmeter" class="screen">
       <div class="dashboard-top">
-        <div>
-          <div class="date-label">WINDOW CALIBRATION</div>
-          <h1 class="title-large">Light Meter</h1>
+        <div class="dashboard-title-group">
+          <img src="assets/app_icon.png" alt="Flora AI" class="dashboard-avatar">
+          <div>
+            <div class="date-label">WINDOW CALIBRATION</div>
+            <h1 class="title-large">Light Meter</h1>
+          </div>
         </div>
       </div>
 
       <div class="lux-display-card">
         <div id="lux-value-display" class="lux-giant-number">0 LUX</div>
         <div id="lux-zone-badge" class="lux-pill">Calibrating...</div>
+        <div class="lux-gauge-track">
+          <div id="lux-gauge-bar" class="lux-gauge-bar"></div>
+        </div>
         <p id="lux-zone-desc" class="lux-explanation">Point phone camera towards the plant spot.</p>
       </div>
 

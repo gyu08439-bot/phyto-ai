@@ -1,5 +1,6 @@
 export const ONBOARDING_QUESTIONS = [
   {
+    isPlant: true,
     id: "plant_count",
     title: "How many plants are in your home?",
     subtitle: "Flora AI tailors care alerts and watering calendars to your collection size.",
@@ -10,6 +11,7 @@ export const ONBOARDING_QUESTIONS = [
     ]
   },
   {
+    isPlant: true,
     id: "experience",
     title: "What is your gardening experience?",
     subtitle: "We adjust diagnosis depth and biological terminology to match your level.",
@@ -20,6 +22,7 @@ export const ONBOARDING_QUESTIONS = [
     ]
   },
   {
+    isPlant: true,
     id: "urgency",
     title: "Is any plant suffering right now?",
     subtitle: "Our Computer Vision model prioritizes acute pathogen & root infections.",
@@ -30,6 +33,7 @@ export const ONBOARDING_QUESTIONS = [
     ]
   },
   {
+    isPlant: true,
     id: "pets",
     title: "Do you have pets at home?",
     subtitle: "Over 40% of houseplants contain calcium oxalate or toxins harmful to cats & dogs.",
@@ -42,6 +46,7 @@ export const ONBOARDING_QUESTIONS = [
 
 export const PLANT_DATABASE = [
   {
+    isPlant: true,
     id: "monstera",
     commonName: "Monstera Deliciosa",
     botanicalName: "Monstera deliciosa",
@@ -63,6 +68,7 @@ export const PLANT_DATABASE = [
     description: "Iconic tropical plant with fenestrated leaves. Extremely resilient, prefers high humidity and chunky airy substrate."
   },
   {
+    isPlant: true,
     id: "ficus_elastica",
     commonName: "Rubber Tree",
     botanicalName: "Ficus elastica 'Burgundy'",
@@ -84,6 +90,7 @@ export const PLANT_DATABASE = [
     description: "Stately plant with thick, glossy leathery dark burgundy foliage. Thrives in stable warmth."
   },
   {
+    isPlant: true,
     id: "snake_plant",
     commonName: "Snake Plant",
     botanicalName: "Dracaena trifasciata",
@@ -105,6 +112,7 @@ export const PLANT_DATABASE = [
     description: "Nearly indestructible air-purifier. Tolerates deep shade, drought, and neglected watering."
   },
   {
+    isPlant: true,
     id: "calathea_orbifolia",
     commonName: "Calathea Orbifolia",
     botanicalName: "Goeppertia orbifolia",
@@ -126,6 +134,7 @@ export const PLANT_DATABASE = [
     description: "Stunning round silver-striped leaves. Requires pure distilled/rainwater and high ambient humidity."
   },
   {
+    isPlant: true,
     id: "zz_plant",
     commonName: "ZZ Plant",
     botanicalName: "Zamioculcas zamiifolia",
@@ -146,6 +155,7 @@ export const PLANT_DATABASE = [
     description: "Thick waxy leaves sprouting from potato-like subterranean rhizomes. Thrives in dimly lit offices."
   },
   {
+    isPlant: true,
     id: "pothos_golden",
     commonName: "Golden Pothos",
     botanicalName: "Epipremnum aureum",
@@ -166,6 +176,7 @@ export const PLANT_DATABASE = [
     description: "Fast-growing cascading trailing vine with heart-shaped golden variegated foliage."
   },
   {
+    isPlant: true,
     id: "boston_fern",
     commonName: "Boston Fern",
     botanicalName: "Nephrolepis exaltata",
@@ -186,6 +197,7 @@ export const PLANT_DATABASE = [
     description: "Lush arching fronds. Outstanding natural humidifying and pet-safe decorative fern."
   },
   {
+    isPlant: true,
     id: "spider_plant",
     commonName: "Spider Plant",
     botanicalName: "Chlorophytum comosum",
@@ -206,6 +218,7 @@ export const PLANT_DATABASE = [
     description: "Air-purifying champion with cascading baby plantlets. Safe for curious cats and puppies."
   },
   {
+    isPlant: true,
     id: "peace_lily",
     commonName: "Peace Lily",
     botanicalName: "Spathiphyllum wallisii",
@@ -226,6 +239,7 @@ export const PLANT_DATABASE = [
     description: "Dramatic communicative plant that wilts visibly when thirsty and recovers within hours of watering."
   },
   {
+    isPlant: true,
     id: "money_tree",
     commonName: "Money Tree",
     botanicalName: "Pachira aquatica",

@@ -13,6 +13,7 @@ export class PlantScanner {
     this.laser = document.getElementById("scanner-laser");
     this.triggerBtn = document.getElementById("btn-capture-scan");
     this.presetChips = document.querySelectorAll(".preset-chip");
+    this.fileInput = document.getElementById("scanner-file-input");
 
     this.isScanning = false;
     this.stream = null;
@@ -24,6 +25,26 @@ export class PlantScanner {
     if (this.triggerBtn) {
       this.triggerBtn.addEventListener("click", () => {
         this.captureAndScan();
+      });
+    }
+
+    if (this.fileInput) {
+      this.fileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (this.beforeScan && !this.beforeScan()) return;
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          const dataUrl = re.target.result;
+          if (this.cameraPreview) {
+            this.cameraPreview.src = dataUrl;
+            this.cameraPreview.style.display = "block";
+          }
+          if (this.cameraFeed) this.cameraFeed.style.display = "none";
+          this.runSilentScan(dataUrl);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = "";
       });
     }
 

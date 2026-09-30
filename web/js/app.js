@@ -169,7 +169,7 @@ class FloraApp {
     const percentText = document.getElementById("computing-percent");
     const steps = [
       "Scanning leaf morphology...",
-      "Connecting to Llama 3.2 Vision AI...",
+      "Connecting to Botanical Neural Engine...",
       "Calibrating chlorophyll health index...",
       "Personalizing watering calendar..."
     ];
@@ -442,7 +442,12 @@ class FloraApp {
         <button class="btn-water-item ${isUrgent ? "urgent" : ""}" data-id="${plant.id}">
           ${waterLabel}
         </button>
+        <button class="btn-delete-plant" data-id="${plant.id}" title="Remove plant" aria-label="Remove plant">✕</button>
       `;
+
+      el.addEventListener("click", () => {
+        this.renderDiagnosis(plant);
+      });
 
       const waterBtn = el.querySelector(".btn-water-item");
       waterBtn.addEventListener("click", (ev) => {
@@ -450,8 +455,22 @@ class FloraApp {
         this.waterPlant(plant.id, waterBtn);
       });
 
+      const deleteBtn = el.querySelector(".btn-delete-plant");
+      deleteBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (confirm(`Remove "${plant.nickname || plant.commonName}" from your garden?`)) {
+          this.deletePlant(plant.id);
+        }
+      });
+
       container.appendChild(el);
     });
+  }
+
+  deletePlant(plantId) {
+    this.myPlants = this.myPlants.filter(p => p.id !== plantId);
+    this.saveGarden();
+    this.renderGardenList();
   }
 
   waterPlant(plantId, btnElement) {
@@ -558,6 +577,31 @@ class FloraApp {
 
     const causeDesc = document.getElementById("diag-cause-desc");
     if (causeDesc) causeDesc.textContent = plant.cause || "Excess foliage moisture and poor ventilation allowed fungal spores to colonize leaf tissue.";
+
+    // Render Pet Safety Card
+    const petCard = document.getElementById("diag-pet-card");
+    const petIcon = document.getElementById("diag-pet-icon");
+    const petTitle = document.getElementById("diag-pet-title");
+    const petDesc = document.getElementById("diag-pet-desc");
+
+    if (petCard) {
+      if (plant.petToxicity) {
+        petCard.style.display = "block";
+        if (plant.petToxicity.isToxic) {
+          petCard.className = "diag-card pet-safety toxic";
+          if (petIcon) petIcon.textContent = "⚠️";
+          if (petTitle) petTitle.textContent = "Harmful to Pets (Toxic)";
+          if (petDesc) petDesc.textContent = plant.petToxicity.notes || "Contains compounds harmful or irritating to cats and dogs.";
+        } else {
+          petCard.className = "diag-card pet-safety non-toxic";
+          if (petIcon) petIcon.textContent = "🐾";
+          if (petTitle) petTitle.textContent = "Pet Friendly & Non-Toxic";
+          if (petDesc) petDesc.textContent = plant.petToxicity.notes || "Safe for households with cats and dogs.";
+        }
+      } else {
+        petCard.style.display = "none";
+      }
+    }
 
     const rx = plant.rx || [
       { step: "Adjust Watering", action: "Pause watering for 4–5 days. Wait until the top 2 inches of soil are dry." },

@@ -5,7 +5,7 @@
   "ios": {
     "preferredContentMode": "mobile",
     "contentInset": "always",
-    "scheme": "Flora AI",
+    "scheme": "floraai",
     "backgroundColor": "#000000"
   },
   "plugins": {
