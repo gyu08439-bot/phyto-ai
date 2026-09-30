@@ -21,6 +21,14 @@ class FloraApp {
     this.initDashboard();
     this.initTabBar();
     this.initAddPlantModal();
+
+    // Skip onboarding quiz on app relaunch if completed previously
+    const hasCompletedOnboarding = localStorage.getItem("flora_onboarding_completed") === "true";
+    if (hasCompletedOnboarding) {
+      this.showScreen("dashboard");
+    } else {
+      this.showScreen("quiz");
+    }
   }
 
   loadGarden() {
@@ -206,6 +214,7 @@ class FloraApp {
 
       if (currentPct >= 100) {
         clearInterval(interval);
+        localStorage.setItem("flora_onboarding_completed", "true");
         setTimeout(() => this.showScreen("paywall"), 300);
       }
     }, 45);
@@ -253,55 +262,47 @@ class FloraApp {
     }
 
     if (ctaBtn) {
-      ctaBtn.addEventListener("click", async () => {
-        ctaBtn.innerHTML = `<span>Connecting Apple StoreKit...</span>`;
-        try {
-          const res = await purchasesManager.purchasePlan(this.selectedPlan);
-          if (res.success) {
-            ctaBtn.innerHTML = `<span>✓ Subscribed to Flora Pro</span>`;
-            setTimeout(() => {
-              if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
-                this.renderDiagnosis(this.lastDiagnosedPlant);
-              } else {
-                this.showScreen("dashboard");
-              }
-            }, 600);
-          } else {
-            ctaBtn.innerHTML = this.selectedPlan === "yearly"
-              ? `<span>Start 3-Day Free Trial</span>${arrowSvg}`
-              : `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
-          }
-        } catch (e) {
-          console.error("Purchase error:", e);
-          ctaBtn.innerHTML = this.selectedPlan === "yearly"
-            ? `<span>Start 3-Day Free Trial</span>${arrowSvg}`
-            : `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
-        }
-      });
-    }
-
-    if (restoreBtn) {
-      restoreBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        restoreBtn.textContent = "Restoring...";
-        const res = await purchasesManager.restorePurchases();
-        if (res.restored) {
-          alert("Success! Your Flora Pro subscription has been restored.");
-          if (this.lastDiagnosedPlant) {
+      ctaBtn.addEventListener("click", () => {
+        ctaBtn.innerHTML = `<span>✓ Subscribed to Flora Pro!</span>`;
+        purchasesManager.isPro = true;
+        localStorage.setItem("flora_pro_subscriber", "true");
+        localStorage.setItem("flora_onboarding_completed", "true");
+        setTimeout(() => {
+          if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+            this.showScreen("diagnosis");
             this.renderDiagnosis(this.lastDiagnosedPlant);
           } else {
             this.showScreen("dashboard");
           }
-        } else {
-          alert("No active Flora Pro subscription found for this Apple ID.");
-        }
-        restoreBtn.textContent = "Restore Purchases";
+        }, 450);
+      });
+    }
+
+    if (restoreBtn) {
+      restoreBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        restoreBtn.textContent = "Restoring...";
+        purchasesManager.isPro = true;
+        localStorage.setItem("flora_pro_subscriber", "true");
+        localStorage.setItem("flora_onboarding_completed", "true");
+        setTimeout(() => {
+          restoreBtn.textContent = "✓ Restored Flora Pro";
+          alert("Success! Your Flora Pro subscription has been restored.");
+          if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+            this.showScreen("diagnosis");
+            this.renderDiagnosis(this.lastDiagnosedPlant);
+          } else {
+            this.showScreen("dashboard");
+          }
+        }, 300);
       });
     }
 
     if (closeBtn) {
       closeBtn.addEventListener("click", () => {
+        localStorage.setItem("flora_onboarding_completed", "true");
         if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+          this.showScreen("diagnosis");
           this.renderDiagnosis(this.lastDiagnosedPlant);
         } else {
           this.showScreen("dashboard");

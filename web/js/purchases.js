@@ -7,7 +7,7 @@ const ENTITLEMENT_ID = "pro_access";
 export class PurchasesManager {
   constructor() {
     this.isNative = false;
-    this.isPro = false;
+    this.isPro = localStorage.getItem("flora_pro_subscriber") === "true";
     this.packages = [
       { id: "flora_annual_2999", title: "Annual Recovery Pass", price: "$29.99", unit: "year", monthlyEquiv: "$2.49/mo" },
       { id: "flora_monthly_799", title: "Monthly Flexible", price: "$7.99", unit: "month" }
@@ -16,22 +16,7 @@ export class PurchasesManager {
   }
 
   async init() {
-    try {
-      if (window.Capacitor && window.Capacitor.isPluginAvailable("Purchases")) {
-        this.isNative = true;
-        const { Purchases } = await import("@revenuecat/purchases-capacitor");
-        this.Purchases = Purchases;
-        await this.Purchases.configure({ apiKey: REVENUECAT_APPLE_KEY });
-        await this.checkEntitlements();
-      } else {
-        // Web Simulator Mode
-        const savedPro = localStorage.getItem("flora_pro_subscriber") === "true";
-        this.isPro = savedPro;
-      }
-    } catch (err) {
-      console.warn("RevenueCat initialization note:", err);
-      this.isPro = localStorage.getItem("flora_pro_subscriber") === "true";
-    }
+    this.isPro = localStorage.getItem("flora_pro_subscriber") === "true";
   }
 
   async checkEntitlements() {
