@@ -197,10 +197,10 @@ class FloraApp {
     const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
     if (this.selectedPlan === "yearly") {
       if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
     } else {
       if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
     }
   }
 
@@ -219,7 +219,7 @@ class FloraApp {
         monthlyCard.classList.remove("selected", "active");
         this.selectedPlan = "yearly";
         if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
       });
 
       monthlyCard.addEventListener("click", () => {
@@ -227,7 +227,7 @@ class FloraApp {
         yearlyCard.classList.remove("selected", "active");
         this.selectedPlan = "monthly";
         if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="#">Terms</a> · <a href="#">Privacy</a>`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
       });
     }
 
