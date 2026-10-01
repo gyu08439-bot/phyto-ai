@@ -61,40 +61,11 @@ def api_request(url, data=None, method=None):
     except Exception as e:
         return 500, {"error": str(e)}
 
-print("\n=== STEP 1: Verify Authentication & Locate Flora AI App ===")
-target_bundle_id = "com.flora.ai"
-target_app_id = None
-
-status, res = api_request("https://api.appstoreconnect.apple.com/v1/apps?limit=50")
-if status != 200:
-    print(f"❌ Failed to authenticate with App Store Connect: HTTP {status}", res)
-    sys.exit(1)
-
-print("✓ Authenticated with App Store Connect API successfully.")
-apps = res.get("data", [])
-for a in apps:
-    bid = a.get("attributes", {}).get("bundleId")
-    name = a.get("attributes", {}).get("name")
-    aid = a.get("id")
-    print(f"  Found App: '{name}' | Bundle ID: {bid} | ID: {aid}")
-    if bid in (target_bundle_id, "com.floraai.plantdoctor", "com.floraai.app"):
-        target_app_id = aid
-        print(f"  -> Selected target App '{name}' (ID: {aid})")
-        break
-
-if not target_app_id:
-    # Default to 6817227948 if found in apps
-    for a in apps:
-        if a.get("id") == "6817227948":
-            target_app_id = "6817227948"
-            break
-    if not target_app_id and len(apps) > 0:
-        target_app_id = apps[0].get("id")
-
-print(f"\nUsing Target App ID: {target_app_id}")
+print("\n=== STEP 1: Locate Flora AI App ===")
+target_app_id = "6817227948"
+print(f"Target App ID: {target_app_id}")
 
 print("\n=== STEP 2: Subscription Group Setup ===")
-# Check existing subscription groups for the app
 status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/apps/{target_app_id}/subscriptionGroups")
 existing_groups = res.get("data", []) if status == 200 else []
 target_group_id = None
@@ -107,41 +78,12 @@ for g in existing_groups:
     break
 
 if not target_group_id:
-    print("Creating new Subscription Group: 'Flora Pro Access'...")
-    group_payload = {
-        "data": {
-            "type": "subscriptionGroups",
-            "attributes": {
-                "referenceName": "Flora Pro Access"
-            },
-            "relationships": {
-                "app": {
-                    "data": {
-                        "type": "apps",
-                        "id": target_app_id
-                    }
-                }
-            }
-        }
-    }
-    status, res = api_request("https://api.appstoreconnect.apple.com/v1/subscriptionGroups", group_payload)
-    if status in (200, 201) and res.get("data"):
-        target_group_id = res["data"]["id"]
-        print(f"✓ Created Subscription Group: 'Flora Pro Access' (ID: {target_group_id})")
-    else:
-        print(f"❌ Failed to create Subscription Group (HTTP {status}):", res)
-        # Try finding group if already existed
-        status_retry, res_retry = api_request(f"https://api.appstoreconnect.apple.com/v1/apps/{target_app_id}/subscriptionGroups")
-        if status_retry == 200 and res_retry.get("data") and len(res_retry["data"]) > 0:
-            target_group_id = res_retry["data"][0]["id"]
-            print(f"✓ Recovered existing Group ID: {target_group_id}")
-        else:
-            sys.exit(1)
+    print("❌ No group found!")
+    sys.exit(1)
 
 print(f"Active Subscription Group ID: {target_group_id}")
 
-print("\n=== STEP 3: Subscriptions Setup ===")
-# Check existing subscriptions in group
+print("\n=== STEP 3: Subscriptions Verification ===")
 status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/subscriptionGroups/{target_group_id}/subscriptions")
 existing_subs = res.get("data", []) if status == 200 else []
 existing_product_ids = {}
@@ -150,81 +92,43 @@ for s in existing_subs:
     pid = s.get("attributes", {}).get("productId")
     sname = s.get("attributes", {}).get("name")
     sid = s.get("id")
-    print(f"  Existing Subscription: '{sname}' (ProductID: {pid}, ID: {sid})")
+    print(f"  ✓ Found Subscription: '{sname}' (ProductID: {pid}, ID: {sid})")
     if pid:
         existing_product_ids[pid] = sid
 
-subscriptions_to_create = [
+subscriptions = [
     {
         "name": "Flora Pro Annual Pass",
         "productId": "flora_annual_2999",
         "period": "ONE_YEAR",
-        "groupLevel": 1,
         "priceTarget": 29.99,
         "locName": "Flora Pro Annual",
-        "locDesc": "Unlimited plant scans, disease diagnosis, and treatment protocols."
+        "locDesc": "Unlimited plant scans & treatment care."  # <= 45 chars
     },
     {
         "name": "Flora Pro Monthly Pass",
         "productId": "flora_monthly_799",
         "period": "ONE_MONTH",
-        "groupLevel": 2,
         "priceTarget": 7.99,
         "locName": "Flora Pro Monthly",
-        "locDesc": "Flexible monthly access to plant disease scans and treatment protocols."
+        "locDesc": "Flexible plant scans & disease care."  # <= 45 chars
     }
 ]
 
-created_sub_ids = {}
-
-for sub_def in subscriptions_to_create:
+print("\n=== STEP 4: Localizations Setup (<= 45 chars) ===")
+for sub_def in subscriptions:
     pid = sub_def["productId"]
-    if pid in existing_product_ids:
-        print(f"✓ Product '{pid}' already exists with ID: {existing_product_ids[pid]}")
-        created_sub_ids[pid] = existing_product_ids[pid]
-        continue
-
-    print(f"\nCreating Subscription: '{sub_def['name']}' (ProductID: {pid}, Period: {sub_def['period']})...")
-    sub_payload = {
-        "data": {
-            "type": "subscriptions",
-            "attributes": {
-                "name": sub_def["name"],
-                "productId": pid,
-                "subscriptionPeriod": sub_def["period"],
-                "groupLevel": sub_def["groupLevel"]
-            },
-            "relationships": {
-                "group": {
-                    "data": {
-                        "type": "subscriptionGroups",
-                        "id": target_group_id
-                    }
-                }
-            }
-        }
-    }
-    status, res = api_request("https://api.appstoreconnect.apple.com/v1/subscriptions", sub_payload)
-    if status in (200, 201) and res.get("data"):
-        sid = res["data"]["id"]
-        created_sub_ids[pid] = sid
-        print(f"✓ Successfully created subscription '{pid}' (ID: {sid})")
-    else:
-        print(f"❌ Failed to create subscription '{pid}' (HTTP {status}):", res)
-
-print("\n=== STEP 4: Localizations & Pricing Setup ===")
-for sub_def in subscriptions_to_create:
-    pid = sub_def["productId"]
-    sid = created_sub_ids.get(pid)
+    sid = existing_product_ids.get(pid)
     if not sid:
+        print(f"Missing ID for {pid}")
         continue
 
-    # 1. Localization
+    # Check localization
     status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}/subscriptionLocalizations")
     locs = res.get("data", []) if status == 200 else []
     has_en = any(l.get("attributes", {}).get("locale") == "en-US" for l in locs)
     if not has_en:
-        print(f"Adding en-US localization for '{pid}'...")
+        print(f"Adding en-US localization for '{pid}' ('{sub_def['locDesc']}' - {len(sub_def['locDesc'])} chars)...")
         loc_payload = {
             "data": {
                 "type": "subscriptionLocalizations",
@@ -245,57 +149,73 @@ for sub_def in subscriptions_to_create:
         }
         l_status, l_res = api_request("https://api.appstoreconnect.apple.com/v1/subscriptionLocalizations", loc_payload)
         if l_status in (200, 201):
-            print(f"✓ Added localization for '{pid}'")
+            print(f"✓ Added en-US localization for '{pid}'")
         else:
-            print(f"  Note on localization for '{pid}' (HTTP {l_status}):", l_res)
+            print(f"  Localization response for '{pid}' (HTTP {l_status}):", l_res)
     else:
         print(f"✓ Localization already present for '{pid}'")
 
-    # 2. Price Points & Prices
-    print(f"Checking price points for '{pid}' (Target: ${sub_def['priceTarget']})...")
-    status, res = api_request(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}/pricePoints?filter[territory]=USA&limit=50")
-    if status == 200 and res.get("data"):
-        points = res["data"]
-        matching_point_id = None
+print("\n=== STEP 5: Price Points & Pricing Setup ===")
+for sub_def in subscriptions:
+    pid = sub_def["productId"]
+    sid = existing_product_ids.get(pid)
+    target_price = sub_def["priceTarget"]
+
+    # Check existing prices first
+    p_status, p_res = api_request(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}/prices")
+    existing_prices = p_res.get("data", []) if p_status == 200 else []
+    if len(existing_prices) > 0:
+        print(f"✓ Product '{pid}' already has active price configuration.")
+        continue
+
+    print(f"Searching price points for '{pid}' (Target: ${target_price})...")
+    next_url = f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}/pricePoints?filter[territory]=USA&limit=100"
+    matching_point_id = None
+
+    while next_url and not matching_point_id:
+        status, res = api_request(next_url)
+        if status != 200:
+            print(f"  Failed to fetch price points: HTTP {status}", res)
+            break
+        points = res.get("data", [])
         for p in points:
             cprice = p.get("attributes", {}).get("customerPrice")
             try:
-                if abs(float(cprice) - sub_def["priceTarget"]) < 0.05:
+                if abs(float(cprice) - target_price) < 0.05:
                     matching_point_id = p.get("id")
-                    print(f"  Found matching USA price point: ${cprice} (ID: {matching_point_id})")
+                    print(f"  -> Found matching USA price point: ${cprice} (ID: {matching_point_id})")
                     break
             except Exception:
                 pass
-        
-        if matching_point_id:
-            price_payload = {
-                "data": {
-                    "type": "subscriptionPrices",
-                    "attributes": {
-                        "startDate": None
+        next_url = res.get("links", {}).get("next")
+
+    if matching_point_id:
+        price_payload = {
+            "data": {
+                "type": "subscriptionPrices",
+                "attributes": {
+                    "startDate": None
+                },
+                "relationships": {
+                    "subscription": {
+                        "data": {"type": "subscriptions", "id": sid}
                     },
-                    "relationships": {
-                        "subscription": {
-                            "data": {"type": "subscriptions", "id": sid}
-                        },
-                        "subscriptionPricePoint": {
-                            "data": {"type": "subscriptionPricePoints", "id": matching_point_id}
-                        }
+                    "subscriptionPricePoint": {
+                        "data": {"type": "subscriptionPricePoints", "id": matching_point_id}
                     }
                 }
             }
-            p_status, p_res = api_request("https://api.appstoreconnect.apple.com/v1/subscriptionPrices", price_payload)
-            if p_status in (200, 201):
-                print(f"✓ Configured price ${sub_def['priceTarget']} for '{pid}'")
-            else:
-                print(f"  Price config response for '{pid}' (HTTP {p_status}):", p_res)
+        }
+        p_status, p_res = api_request("https://api.appstoreconnect.apple.com/v1/subscriptionPrices", price_payload)
+        if p_status in (200, 201):
+            print(f"✓ Configured base price ${target_price} for '{pid}'!")
         else:
-            print(f"  Could not locate exact ${sub_def['priceTarget']} price point in first 50 points.")
+            print(f"  Price config response for '{pid}' (HTTP {p_status}):", p_res)
     else:
-        print(f"  Price points lookup returned HTTP {status}:", res)
+        print(f"  Could not find price point ${target_price} in USA price points.")
 
 print("\n=== SUMMARY ===")
 print("App ID:", target_app_id)
 print("Subscription Group ID:", target_group_id)
-print("Configured Subscriptions:", created_sub_ids)
-print("\nAll done!")
+print("Subscriptions in App Store Connect:", existing_product_ids)
+print("All automated configuration completed successfully!")
