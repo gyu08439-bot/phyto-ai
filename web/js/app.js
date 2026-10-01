@@ -193,23 +193,46 @@ class FloraApp {
 
   showPaywall(reason = "") {
     this.showScreen("paywall");
+    this.renderPaywallState();
+  }
+
+  renderPaywallState() {
     const ctaBtn = document.getElementById("paywall-cta-btn");
     const trialNote = document.getElementById("paywall-trial-note");
+    const yearlyDesc = document.querySelector("#plan-yearly .pw-plan-desc");
     const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
+
+    const yearlyPrice = purchasesManager.cachedPrices?.yearly || "$29.99";
+    const monthlyPrice = purchasesManager.cachedPrices?.monthly || "$7.99";
+    const isTrialEligible = purchasesManager.isTrialEligible !== false;
+
+    if (yearlyDesc) {
+      yearlyDesc.textContent = isTrialEligible
+        ? "3 days free · billed yearly"
+        : "Billed annually · cancel anytime";
+    }
+
     if (this.selectedPlan === "yearly") {
-      if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+      if (isTrialEligible) {
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then ${yearlyPrice}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+      } else {
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${yearlyPrice} / yr</span>${arrowSvg}`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew yearly until canceled in App Store settings. ${yearlyPrice}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+      }
     } else {
-      if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+      if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${monthlyPrice} / mo</span>${arrowSvg}`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew monthly until canceled in App Store settings. ${monthlyPrice}/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
     }
   }
 
   async initPurchases() {
     try {
       await purchasesManager.init();
+      await purchasesManager.checkTrialEligibility();
       const prices = await purchasesManager.loadOfferings();
       this.updatePaywallPrices(prices);
+      this.renderPaywallState();
     } catch (e) {
       console.warn("[FloraApp] initPurchases error:", e);
     }
@@ -235,9 +258,7 @@ class FloraApp {
     if (monthlyBold && prices.monthly) {
       monthlyBold.innerHTML = `${prices.monthly}<small>/mo</small>`;
     }
-    if (trialNote && prices.yearly && this.selectedPlan === "yearly") {
-      trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then ${prices.yearly}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
-    }
+    this.renderPaywallState();
   }
 
   handleEntitlementUpdate(isPro) {
@@ -252,26 +273,20 @@ class FloraApp {
     const ctaBtn = document.getElementById("paywall-cta-btn");
     const closeBtn = document.getElementById("paywall-close-btn");
     const restoreBtn = document.getElementById("paywall-restore-btn");
-    const trialNote = document.getElementById("paywall-trial-note");
-    const arrowSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`;
 
     if (yearlyCard && monthlyCard) {
       yearlyCard.addEventListener("click", () => {
         yearlyCard.classList.add("selected", "active");
         monthlyCard.classList.remove("selected", "active");
         this.selectedPlan = "yearly";
-        const price = purchasesManager.cachedPrices?.yearly || "$29.99";
-        if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then ${price}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+        this.renderPaywallState();
       });
 
       monthlyCard.addEventListener("click", () => {
         monthlyCard.classList.add("selected", "active");
         yearlyCard.classList.remove("selected", "active");
         this.selectedPlan = "monthly";
-        const price = purchasesManager.cachedPrices?.monthly || "$7.99";
-        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${price} / mo</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. ${price}/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+        this.renderPaywallState();
       });
     }
 

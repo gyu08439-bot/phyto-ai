@@ -35,6 +35,7 @@ class PurchasesManager {
     };
     this.offerings = null;
     this._initPromise = null;
+    this.isTrialEligible = localStorage.getItem("flora_has_used_trial") !== "true";
   }
 
   /**
@@ -121,6 +122,32 @@ class PurchasesManager {
   /**
    * Fetch current CustomerInfo from RevenueCat & verify entitlements
    */
+  /**
+   * Check if user is eligible for introductory offer (free trial) via StoreKit / RevenueCat
+   */
+  async checkTrialEligibility() {
+    if (this.plugin && this.configured && typeof this.plugin.checkTrialOrIntroductoryPriceEligibility === "function") {
+      try {
+        const res = await this.plugin.checkTrialOrIntroductoryPriceEligibility({
+          productIdentifiers: [REVENUECAT_CONFIG.products.yearly.appleId]
+        });
+        const status = res?.[REVENUECAT_CONFIG.products.yearly.appleId]?.status;
+        if (typeof status === "number") {
+          this.isTrialEligible = (status === 0);
+          if (!this.isTrialEligible) {
+            localStorage.setItem("flora_has_used_trial", "true");
+          }
+        }
+      } catch (e) {
+        console.warn("[Flora Purchases] checkTrialEligibility failed:", e);
+      }
+    } else {
+      const used = localStorage.getItem("flora_has_used_trial") === "true";
+      this.isTrialEligible = !used;
+    }
+    return this.isTrialEligible;
+  }
+
   async checkEntitlements() {
     if (this.plugin && this.configured) {
       try {
