@@ -24,4 +24,4 @@ jobs:
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: |
           pip install requests
-          python3 scripts/check_sub_status.py
+          python3 scripts/inspect_price_points.py
