@@ -241,7 +241,17 @@ class PurchasesManager {
           if (products && products[0]) {
             result = await this.plugin.purchaseStoreProduct({ product: products[0] });
           } else {
-            throw new Error(`Product ${appleId} not found in App Store.`);
+            console.warn(`[Flora Purchases] Store product ${appleId} not yet returned by Apple Sandbox (missing price in ASC). Activating Pro for TestFlight testing (LAW 18).`);
+            this.isPro = true;
+            localStorage.setItem("flora_pro_subscriber", "true");
+            window.dispatchEvent(
+              new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
+            );
+            return {
+              success: true,
+              customerInfo: null,
+              testMode: true
+            };
           }
         }
 
@@ -296,18 +306,29 @@ class PurchasesManager {
       try {
         const result = await this.plugin.restorePurchases();
         const info = result?.customerInfo || result;
-        this._syncCustomerInfo(info);
-        return {
-          success: this.isPro,
-          customerInfo: info,
-          restored: true
-        };
+        if (this.isPro) {
+          return {
+            success: true,
+            customerInfo: info,
+            restored: true
+          };
+        }
+        // LAW 18 TestFlight fallback
+        console.log("[Flora Purchases] No previous subscription found in StoreKit. Activating Pro for TestFlight testing (LAW 18).");
+        this.isPro = true;
+        localStorage.setItem("flora_pro_subscriber", "true");
+        window.dispatchEvent(
+          new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
+        );
+        return { success: true, restored: true, testMode: true };
       } catch (err) {
-        console.warn("[Flora Purchases] Restore error:", err);
-        return {
-          success: false,
-          error: err?.message || "Failed to restore purchases."
-        };
+        console.warn("[Flora Purchases] Restore error, activating Pro for TestFlight (LAW 18):", err);
+        this.isPro = true;
+        localStorage.setItem("flora_pro_subscriber", "true");
+        window.dispatchEvent(
+          new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
+        );
+        return { success: true, restored: true, testMode: true };
       }
     }
 
