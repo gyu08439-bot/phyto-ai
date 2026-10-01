@@ -1,0 +1,35 @@
+name: Fix App Store Localizations
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/fix_all_localizations.py'
+      - '.github/workflows/fix-localizations.yml'
+
+jobs:
+  fix-localizations:
+    name: Fix Subscription Group & Subscription Localizations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyjwt cryptography requests
+
+      - name: Run Localization Fixer
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          python3 scripts/fix_all_localizations.py
