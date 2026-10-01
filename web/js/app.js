@@ -420,6 +420,16 @@ class FloraApp {
     if (unlockRxBtn) {
       unlockRxBtn.addEventListener("click", () => this.showPaywall("rx_unlock"));
     }
+
+    const captureBtn = document.getElementById("btn-capture-scan");
+    if (captureBtn) {
+      captureBtn.addEventListener("click", (e) => {
+        if (!purchasesManager.isPro && this.freeScansUsed >= 1) {
+          e.stopImmediatePropagation();
+          this.showPaywall("scanner_limit");
+        }
+      }, true);
+    }
   }
 
   showNotPlantNotification(title, message) {
@@ -451,10 +461,53 @@ class FloraApp {
 
   initLightMeter() {
     this.lightMeter = new LightMeter();
+    const luxStartBtn = document.getElementById("lux-start-btn");
+    if (luxStartBtn) {
+      luxStartBtn.addEventListener("click", (e) => {
+        if (!purchasesManager.isPro) {
+          e.stopImmediatePropagation();
+          this.showPaywall("light_meter_pro");
+        }
+      }, true);
+    }
   }
 
   initDashboard() {
     this.renderGardenList();
+    this.updateDashboardProState();
+
+    window.addEventListener("flora:entitlement_updated", () => {
+      this.updateDashboardProState();
+      this.renderGardenList();
+    });
+
+    const proHeaderBtn = document.getElementById("btn-pro-header");
+    if (proHeaderBtn) {
+      proHeaderBtn.addEventListener("click", () => {
+        if (!purchasesManager.isPro) {
+          this.showPaywall("dashboard_header_badge");
+        } else {
+          alert("✓ Flora Pro Active · All Features & Scans Unlocked");
+        }
+      });
+    }
+
+    const upgradeBannerBtn = document.getElementById("btn-dash-upgrade");
+    if (upgradeBannerBtn) {
+      upgradeBannerBtn.addEventListener("click", () => {
+        this.showPaywall("dashboard_upgrade_banner");
+      });
+    }
+
+    const vitalityCard = document.querySelector(".hero-vitality-card");
+    if (vitalityCard) {
+      vitalityCard.style.cursor = "pointer";
+      vitalityCard.addEventListener("click", () => {
+        if (!purchasesManager.isPro) {
+          this.showPaywall("vitality_deep_analytics");
+        }
+      });
+    }
 
     document.querySelectorAll(".segment-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -464,6 +517,26 @@ class FloraApp {
         this.renderGardenList();
       });
     });
+  }
+
+  updateDashboardProState() {
+    const isPro = purchasesManager.isPro;
+    const banner = document.getElementById("dashboard-pro-banner");
+    const proBtn = document.getElementById("btn-pro-header");
+
+    if (banner) {
+      banner.style.display = isPro ? "none" : "flex";
+    }
+
+    if (proBtn) {
+      if (isPro) {
+        proBtn.textContent = "👑 PRO ACTIVE";
+        proBtn.classList.add("active-pro");
+      } else {
+        proBtn.textContent = "👑 PRO";
+        proBtn.classList.remove("active-pro");
+      }
+    }
   }
 
   renderGardenList() {
@@ -599,7 +672,13 @@ class FloraApp {
     }
 
     if (openBtn && modal) {
-      openBtn.addEventListener("click", () => modal.classList.add("active"));
+      openBtn.addEventListener("click", () => {
+        if (!purchasesManager.isPro && this.myPlants && this.myPlants.length >= 1) {
+          this.showPaywall("garden_plants_limit");
+          return;
+        }
+        modal.classList.add("active");
+      });
     }
 
     if (closeBtn && modal) {
