@@ -72,6 +72,55 @@ export default {
       });
     }
 
+    // Entitlement verification endpoint (OWASP MASVS MASVS-AUTH)
+    if (url.pathname === "/api/verify-entitlement" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const appUserId = body.appUserId;
+        if (!appUserId) {
+          return new Response(JSON.stringify({ error: "Missing appUserId" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          });
+        }
+
+        // If REVENUECAT_SECRET_KEY is configured in Cloudflare environment:
+        if (env.REVENUECAT_SECRET_KEY) {
+          const rcRes = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`, {
+            headers: {
+              "Authorization": `Bearer ${env.REVENUECAT_SECRET_KEY}`,
+              "Content-Type": "application/json"
+            }
+          });
+          if (rcRes.ok) {
+            const data = await rcRes.json();
+            const entitlements = data?.subscriber?.entitlements || {};
+            const isPro = !!(entitlements.pro_access && (!entitlements.pro_access.expires_date || new Date(entitlements.pro_access.expires_date) > new Date()));
+            return new Response(JSON.stringify({
+              isPro,
+              entitlement: "pro_access",
+              subscriber: data.subscriber
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" }
+            });
+          }
+        }
+
+        return new Response(JSON.stringify({
+          isPro: false,
+          status: "unverified",
+          message: "RevenueCat secret key pending configuration"
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
+
     // Diagnostics endpoint
     if (url.pathname === "/api/diagnose" && request.method === "POST") {
       // 1. Origin and Client Verification Shield

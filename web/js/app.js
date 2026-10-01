@@ -21,6 +21,7 @@ class FloraApp {
     this.initDashboard();
     this.initTabBar();
     this.initAddPlantModal();
+    this.initPurchases();
 
     // Skip onboarding quiz on app relaunch if completed previously
     const hasCompletedOnboarding = localStorage.getItem("flora_onboarding_completed") === "true";
@@ -204,6 +205,47 @@ class FloraApp {
     }
   }
 
+  async initPurchases() {
+    try {
+      await purchasesManager.init();
+      const prices = await purchasesManager.loadOfferings();
+      this.updatePaywallPrices(prices);
+    } catch (e) {
+      console.warn("[FloraApp] initPurchases error:", e);
+    }
+
+    window.addEventListener("flora:entitlement_updated", (e) => {
+      this.handleEntitlementUpdate(e.detail?.isPro);
+    });
+  }
+
+  updatePaywallPrices(prices) {
+    if (!prices) return;
+    const yearlyBold = document.querySelector("#plan-yearly .pw-price-bold");
+    const yearlySub = document.querySelector("#plan-yearly .pw-price-sub");
+    const monthlyBold = document.querySelector("#plan-monthly .pw-price-bold");
+    const trialNote = document.getElementById("paywall-trial-note");
+
+    if (yearlyBold && prices.yearlyMonthly) {
+      yearlyBold.innerHTML = `${prices.yearlyMonthly.replace("/mo", "")}<small>/mo</small>`;
+    }
+    if (yearlySub && prices.yearly) {
+      yearlySub.textContent = `${prices.yearly} / year`;
+    }
+    if (monthlyBold && prices.monthly) {
+      monthlyBold.innerHTML = `${prices.monthly}<small>/mo</small>`;
+    }
+    if (trialNote && prices.yearly && this.selectedPlan === "yearly") {
+      trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then ${prices.yearly}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+    }
+  }
+
+  handleEntitlementUpdate(isPro) {
+    if (this.lastDiagnosedPlant && this.currentScreen === "diagnosis") {
+      this.renderDiagnosis(this.lastDiagnosedPlant);
+    }
+  }
+
   initPaywall() {
     const yearlyCard = document.getElementById("plan-yearly");
     const monthlyCard = document.getElementById("plan-monthly");
@@ -218,53 +260,91 @@ class FloraApp {
         yearlyCard.classList.add("selected", "active");
         monthlyCard.classList.remove("selected", "active");
         this.selectedPlan = "yearly";
+        const price = purchasesManager.cachedPrices?.yearly || "$29.99";
         if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then $29.99/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. 3 days free, then ${price}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
       });
 
       monthlyCard.addEventListener("click", () => {
         monthlyCard.classList.add("selected", "active");
         yearlyCard.classList.remove("selected", "active");
         this.selectedPlan = "monthly";
-        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for $7.99 / mo</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. $7.99/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+        const price = purchasesManager.cachedPrices?.monthly || "$7.99";
+        if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${price} / mo</span>${arrowSvg}`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew until canceled in App Store settings. ${price}/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
       });
     }
 
     if (ctaBtn) {
-      ctaBtn.addEventListener("click", () => {
-        ctaBtn.innerHTML = `<span>✓ Subscribed to Flora Pro!</span>`;
-        purchasesManager.isPro = true;
-        localStorage.setItem("flora_pro_subscriber", "true");
-        localStorage.setItem("flora_onboarding_completed", "true");
-        setTimeout(() => {
-          if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
-            this.showScreen("diagnosis");
-            this.renderDiagnosis(this.lastDiagnosedPlant);
-          } else {
-            this.showScreen("dashboard");
+      ctaBtn.addEventListener("click", async () => {
+        if (ctaBtn.disabled) return;
+        const originalContent = ctaBtn.innerHTML;
+        try {
+          ctaBtn.disabled = true;
+          ctaBtn.innerHTML = `<span>Connecting to App Store...</span>`;
+
+          const result = await purchasesManager.purchasePlan(this.selectedPlan);
+
+          if (result.cancelled) {
+            ctaBtn.disabled = false;
+            ctaBtn.innerHTML = originalContent;
+            return;
           }
-        }, 450);
+
+          if (result.success) {
+            ctaBtn.innerHTML = `<span>✓ Subscribed to Flora Pro!</span>`;
+            localStorage.setItem("flora_onboarding_completed", "true");
+            setTimeout(() => {
+              ctaBtn.disabled = false;
+              ctaBtn.innerHTML = originalContent;
+              if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+                this.showScreen("diagnosis");
+                this.renderDiagnosis(this.lastDiagnosedPlant);
+              } else {
+                this.showScreen("dashboard");
+              }
+            }, 600);
+          } else {
+            ctaBtn.disabled = false;
+            ctaBtn.innerHTML = originalContent;
+            alert(result.error || "Unable to complete purchase. Please try again.");
+          }
+        } catch (err) {
+          ctaBtn.disabled = false;
+          ctaBtn.innerHTML = originalContent;
+          alert("Purchase failed: " + (err?.message || err));
+        }
       });
     }
 
     if (restoreBtn) {
-      restoreBtn.addEventListener("click", (e) => {
+      restoreBtn.addEventListener("click", async (e) => {
         e.preventDefault();
-        restoreBtn.textContent = "Restoring...";
-        purchasesManager.isPro = true;
-        localStorage.setItem("flora_pro_subscriber", "true");
-        localStorage.setItem("flora_onboarding_completed", "true");
-        setTimeout(() => {
-          restoreBtn.textContent = "✓ Restored Flora Pro";
-          alert("Success! Your Flora Pro subscription has been restored.");
-          if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
-            this.showScreen("diagnosis");
-            this.renderDiagnosis(this.lastDiagnosedPlant);
+        const origText = restoreBtn.textContent;
+        try {
+          restoreBtn.textContent = "Restoring...";
+          const result = await purchasesManager.restorePurchases();
+          if (result.success) {
+            restoreBtn.textContent = "✓ Restored Flora Pro";
+            localStorage.setItem("flora_onboarding_completed", "true");
+            alert("Success! Your Flora Pro subscription has been restored.");
+            setTimeout(() => {
+              restoreBtn.textContent = origText;
+              if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
+                this.showScreen("diagnosis");
+                this.renderDiagnosis(this.lastDiagnosedPlant);
+              } else {
+                this.showScreen("dashboard");
+              }
+            }, 400);
           } else {
-            this.showScreen("dashboard");
+            restoreBtn.textContent = origText;
+            alert("No active subscriptions found for this Apple ID.");
           }
-        }, 300);
+        } catch (err) {
+          restoreBtn.textContent = origText;
+          alert("Restore error: " + (err?.message || err));
+        }
       });
     }
 
