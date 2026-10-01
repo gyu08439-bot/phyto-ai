@@ -9,8 +9,8 @@
   --emerald-glow: rgba(0, 240, 118, 0.3);
   
   --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.65);
-  --text-muted: rgba(255, 255, 255, 0.40);
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.70);
   
   --squircle: 24px;
   --squircle-sm: 16px;
@@ -87,7 +87,7 @@ body {
 }
 
 .date-label {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 800;
   letter-spacing: 1.5px;
   color: var(--emerald);
@@ -95,7 +95,7 @@ body {
 }
 
 .card-caption {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 800;
   letter-spacing: 1.5px;
   color: var(--emerald);
@@ -113,7 +113,7 @@ body {
   background: var(--emerald);
   color: #000000;
   border: none;
-  border-radius: var(--squircle);
+  border-radius: 999px;
   font-size: 17px;
   font-weight: 800;
   cursor: pointer;
@@ -134,7 +134,7 @@ body {
   background: var(--surface);
   color: var(--text-primary);
   border: 1px solid var(--surface-border);
-  border-radius: var(--squircle-sm);
+  border-radius: 999px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -348,14 +348,15 @@ body {
   pointer-events: none;
 }
 
-/* Split Leaf Comparison Badges (Without Pro vs Flora Pro) */
+/* Split Leaf Comparison Badges (Positioned below the leaf) */
 .pw-leaf-badges {
   position: absolute;
-  top: calc(var(--safe-top) + 8px);
-  left: 14px;
-  right: 58px;
+  bottom: 8px;
+  left: 0;
+  right: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 28px;
   align-items: center;
   pointer-events: none;
   z-index: 6;
@@ -364,57 +365,45 @@ body {
 .pw-leaf-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  gap: 6px;
+  padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .pw-leaf-badge.left {
-  border: 1px solid rgba(229, 169, 60, 0.45);
+  border: 1px solid rgba(229, 169, 60, 0.55);
   color: #E5A93C;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
 }
 
 .pw-leaf-badge.right {
-  border: 1px solid rgba(0, 240, 118, 0.45);
+  border: 1px solid rgba(0, 240, 118, 0.55);
   color: #00F076;
-  box-shadow: 0 2px 12px rgba(0, 240, 118, 0.25);
+  box-shadow: 0 2px 14px rgba(0, 240, 118, 0.3);
 }
 
 .pw-badge-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .pw-badge-dot.dry {
   background: #E5A93C;
+  box-shadow: 0 0 6px rgba(229, 169, 60, 0.6);
 }
 
 .pw-badge-dot.alive {
   background: #00F076;
-  box-shadow: 0 0 6px #00F076;
-}
-
-/* Center Dividing Line down the stem */
-.pw-leaf-divider {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1.5px;
-  transform: translateX(-50%);
-  background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.35) 20%, rgba(0, 240, 118, 0.5) 75%, #000000 100%);
-  pointer-events: none;
-  z-index: 4;
+  box-shadow: 0 0 8px #00F076;
 }
 
 .pw-close-btn {
@@ -490,11 +479,12 @@ body {
 }
 
 .pw-subheadline {
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.35;
   margin: 0 0 8px;
-  max-width: 320px;
+  max-width: 330px;
 }
 
 /* Big Minimalist Plan Cards Stack */
@@ -510,10 +500,10 @@ body {
   position: relative;
   width: 100%;
   min-height: 62px;
-  padding: 10px 16px;
-  border-radius: 18px;
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 18px;
+  border-radius: 26px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -535,13 +525,13 @@ body {
 
 .pw-badge {
   position: absolute;
-  top: -9px;
-  right: 14px;
-  padding: 3px 9px;
+  top: -10px;
+  right: 16px;
+  padding: 4px 10px;
   background: linear-gradient(135deg, #00F076, #00a852);
   color: #000000;
   border-radius: 999px;
-  font-size: 8.5px;
+  font-size: 9.5px;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -588,21 +578,23 @@ body {
 }
 
 .pw-plan-title {
-  font-size: 15px;
+  font-size: 16.5px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.01em;
 }
 
 .pw-plan-desc {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 1.25;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.3;
 }
 
 .pw-card.selected .pw-plan-desc,
 .pw-card.active .pw-plan-desc {
-  color: rgba(0, 240, 118, 0.9);
+  color: #00F076;
+  font-weight: 700;
 }
 
 .pw-card-pricing {
@@ -614,16 +606,16 @@ body {
 }
 
 .pw-price-bold {
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 900;
   color: #ffffff;
   letter-spacing: -0.02em;
 }
 
 .pw-price-bold small {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
   margin-left: 2px;
 }
 
@@ -634,20 +626,20 @@ body {
 }
 
 .pw-price-sub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 500;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 650;
 }
 
 /* Big Bold High-Converting CTA Button */
 .pw-cta {
   width: 100%;
-  height: 52px;
+  height: 54px;
   border: 0;
-  border-radius: 18px;
+  border-radius: 999px;
   background: linear-gradient(135deg, #00F076 0%, #00a852 100%);
   color: #000000;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 850;
   letter-spacing: -0.01em;
   display: flex;
@@ -683,9 +675,9 @@ body {
 .pw-restore {
   border: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-  font-weight: 650;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 700;
   padding: 4px 8px;
   margin-top: 2px;
   cursor: pointer;
@@ -697,16 +689,18 @@ body {
 }
 
 .pw-legal {
-  font-size: 10px !important;
-  color: rgba(255, 255, 255, 0.35) !important;
-  line-height: 1.35 !important;
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
   text-align: center;
   margin: 2px 0 0;
   max-width: 320px;
 }
 
 .pw-legal a {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
   text-decoration: underline;
 }
 
@@ -752,25 +746,25 @@ body {
 }
 
 .vitality-text {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 650;
   margin-top: 4px;
 }
 
 .vitality-badge {
   background: rgba(255, 255, 255, 0.1);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 750;
   padding: 6px 14px;
-  border-radius: 99px;
+  border-radius: 999px;
 }
 
 .segmented-control {
   display: flex;
   background: var(--surface);
   border: 1px solid var(--surface-border);
-  border-radius: 14px;
+  border-radius: 999px;
   padding: 4px;
   margin-bottom: 18px;
 }
@@ -780,16 +774,16 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 8px 10px;
-  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 750;
+  padding: 9px 12px;
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .segment-btn.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--text-primary);
 }
 
@@ -835,8 +829,9 @@ body {
 }
 
 .plant-item-sub {
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
   margin-top: 3px;
 }
 
@@ -844,10 +839,10 @@ body {
   background: var(--surface-hover);
   border: 1px solid var(--surface-border);
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px 14px;
-  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 750;
+  padding: 10px 16px;
+  border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -973,41 +968,10 @@ body {
 }
 
 .shutter-hint {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 10px;
-}
-
-.demo-pills-wrap {
-  width: 100%;
-  margin-top: 20px;
-  text-align: center;
-}
-
-.demo-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
-
-.demo-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
-
-.preset-chip {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  color: var(--text-primary);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 99px;
-  cursor: pointer;
+  color: var(--text-secondary);
+  margin-top: 10px;
 }
 
 /* Not A Plant Warning Card / Toast */
@@ -1108,7 +1072,7 @@ body {
   background: rgba(255, 230, 0, 0.12);
   border: 1px solid rgba(255, 230, 0, 0.3);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.05em;
   color: #FFE600;
@@ -1150,11 +1114,11 @@ body {
 }
 
 .diag-hero-score .score-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* Big Primary Issue Card */
@@ -1168,11 +1132,11 @@ body {
 }
 
 .card-caption {
-  font-size: 10.5px;
+  font-size: 12.5px;
   font-weight: 850;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--emerald);
   margin-bottom: 8px;
 }
 
@@ -1185,9 +1149,9 @@ body {
 }
 
 .diag-condition-desc {
-  font-size: 14px;
+  font-size: 14.5px;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
 }
 
@@ -1239,10 +1203,11 @@ body {
 }
 
 .diag-action-block .action-desc {
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
+  font-weight: 550;
 }
 
 .diag-action-block.pro-step.locked-step {
@@ -1253,7 +1218,7 @@ body {
 }
 
 .diag-action-block.pro-step.locked-step .action-desc {
-  color: rgba(255, 230, 0, 0.85);
+  color: rgba(255, 230, 0, 0.95);
   font-style: italic;
 }
 
@@ -1282,14 +1247,15 @@ body {
 }
 
 .pro-banner-title {
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 850;
   color: #ffffff;
 }
 
 .pro-banner-sub {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
   margin-top: 2px;
   line-height: 1.35;
 }
@@ -1300,7 +1266,7 @@ body {
   color: #000000;
   border: none;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 900;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -1490,8 +1456,8 @@ body {
 }
 
 .tab-text {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 750;
   letter-spacing: 0.3px;
 }
 
