@@ -28,16 +28,16 @@ HEADERS = {"Authorization": f"Bearer {token}", "Content-Type": "application/json
 ANNUAL_SUB_ID = "6818063327"
 MONTHLY_SUB_ID = "6818063612"
 
-print("--- 1. Testing USA Price Points for Annual Sub ---")
-r_usa = requests.get(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{ANNUAL_SUB_ID}/pricePoints?filter[territory]=USA&limit=50", headers=HEADERS)
-print("USA pricePoints status:", r_usa.status_code)
-if r_usa.status_code == 200:
-    pts = r_usa.json().get("data", [])
-    print(f"Found {len(pts)} price points for USA.")
+# 1. Set USA Price Point for Monthly Sub ($7.99)
+print("--- 1. Setting USA Price Point for Monthly Sub ($7.99) ---")
+r_m = requests.get(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{MONTHLY_SUB_ID}/pricePoints?filter[territory]=USA&limit=50", headers=HEADERS)
+print("Monthly pricePoints status:", r_m.status_code)
+if r_m.status_code == 200:
+    pts = r_m.json().get("data", [])
     target_pt = None
     for p in pts:
         price = p.get("attributes", {}).get("customerPrice")
-        if price == "29.99":
+        if price == "7.99":
             target_pt = p
             break
     if not target_pt and pts:
@@ -46,29 +46,33 @@ if r_usa.status_code == 200:
     if target_pt:
         pt_id = target_pt.get("id")
         price = target_pt.get("attributes", {}).get("customerPrice")
-        print(f"Selected point: ID={pt_id}, Price={price}")
-        
-        # Try POST subscriptionPrices
+        print(f"Selected monthly point: ID={pt_id}, Price={price}")
         p_payload = {
             "data": {
                 "type": "subscriptionPrices",
                 "attributes": {"startDate": None},
                 "relationships": {
-                    "subscription": {"data": {"type": "subscriptions", "id": ANNUAL_SUB_ID}},
+                    "subscription": {"data": {"type": "subscriptions", "id": MONTHLY_SUB_ID}},
                     "subscriptionPricePoint": {"data": {"type": "subscriptionPricePoints", "id": pt_id}}
                 }
             }
         }
         resp = requests.post("https://api.appstoreconnect.apple.com/v1/subscriptionPrices", json=p_payload, headers=HEADERS)
-        print("POST subscriptionPrices USA status:", resp.status_code)
-        print("Response:", resp.text)
+        print("POST monthly price status:", resp.status_code)
+        print("Response:", resp.text[:300])
 
-print("\n--- 2. Checking Subscription Availabilities ---")
-r_avail = requests.get(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{ANNUAL_SUB_ID}/subscriptionAvailability", headers=HEADERS)
-print("subscriptionAvailability status:", r_avail.status_code, r_avail.text)
-
-# Also check app's base territory
-r_app = requests.get("https://api.appstoreconnect.apple.com/v1/apps/6817227948?include=priceSchedule", headers=HEADERS)
-print("app priceSchedule status:", r_app.status_code)
-if r_app.status_code == 200:
-    print("App data:", json.dumps(r_app.json(), indent=2)[:500])
+# 2. Check updated status and prices of both subscriptions
+print("\n--- 2. Verifying Subscriptions Status & Prices ---")
+for name, sid in [("flora_annual_2999", ANNUAL_SUB_ID), ("flora_monthly_799", MONTHLY_SUB_ID)]:
+    sub_r = requests.get(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}?include=prices", headers=HEADERS)
+    print(f"\nSubscription {name} ({sid}): HTTP {sub_r.status_code}")
+    if sub_r.status_code == 200:
+        s_data = sub_r.json()
+        attrs = s_data.get("data", {}).get("attributes", {})
+        print(f"  Name: {attrs.get('name')}")
+        print(f"  State: {attrs.get('state')}")
+        print(f"  Review Note: {attrs.get('reviewNote')}")
+        inc = s_data.get("included", [])
+        print(f"  Prices count in included: {len(inc)}")
+        for item in inc:
+            print(f"    Price item: {item.get('id')}, type: {item.get('type')}")
