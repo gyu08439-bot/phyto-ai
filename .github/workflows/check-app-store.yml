@@ -16,12 +16,11 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: pip install pyjwt cryptography
+        run: pip install pyjwt cryptography requests
       - name: Check Builds
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: |
-          pip install requests
-          python3 scripts/check_group.py
+          python3 scripts/check_app_builds.py
