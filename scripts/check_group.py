@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import os
-import sys
-import time
-import json
 import requests
 import jwt
+import time
 
 KEY_ID = os.environ.get("APP_STORE_CONNECT_KEY_ID")
 ISSUER_ID = os.environ.get("APP_STORE_CONNECT_ISSUER_ID")
@@ -25,23 +23,22 @@ if isinstance(token, bytes):
 
 HEADERS = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
 
-# Add review note to subscription 6818063327 and 6818063612
-for sid in ["6818063327", "6818063612"]:
-    patch_payload = {
-        "data": {
-            "type": "subscriptions",
-            "id": sid,
-            "attributes": {
-                "reviewNote": "Annual and monthly subscriptions unlock full clinical plant pathology and unlimited plant diagnosis."
-            }
+# Test subscriptionSubmissions
+r = requests.post("https://api.appstoreconnect.apple.com/v1/subscriptionSubmissions", json={
+    "data": {
+        "type": "subscriptionSubmissions",
+        "relationships": {
+            "subscription": {"data": {"type": "subscriptions", "id": "6818063327"}}
         }
     }
-    r = requests.patch(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}", json=patch_payload, headers=HEADERS)
-    print(f"Patch reviewNote on {sid}: HTTP {r.status_code}")
+}, headers=HEADERS)
+print("subscriptionSubmissions POST status:", r.status_code)
+print(r.text)
 
-# Check subscription details
-r = requests.get("https://api.appstoreconnect.apple.com/v1/subscriptions/6818063327?include=subscriptionLocalizations,appStoreReviewScreenshot,prices", headers=HEADERS)
-if r.status_code == 200:
-    data = r.json()
-    print("Annual Sub attrs:", json.dumps(data.get("data", {}).get("attributes"), indent=2))
-    print("Included types:", [x.get("type") for x in data.get("included", [])])
+# Also check app store version in-app purchase relationships
+r2 = requests.get("https://api.appstoreconnect.apple.com/v1/apps/6817227948/appStoreVersions?filter[appStoreState]=PREPARE_FOR_SUBMISSION", headers=HEADERS)
+print("appStoreVersions status:", r2.status_code)
+if r2.status_code == 200:
+    for v in r2.json().get("data", []):
+        vid = v.get("id")
+        print("Version:", vid, v.get("attributes", {}).get("versionString"))
