@@ -25,30 +25,23 @@ if isinstance(token, bytes):
 
 HEADERS = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Accept": "application/json"}
 
-# 1. Check Subscription Groups for the App
-r_groups = requests.get("https://api.appstoreconnect.apple.com/v1/apps/6817227948/subscriptionGroups", headers=HEADERS)
-print("subscriptionGroups status:", r_groups.status_code)
-group_ids = []
-if r_groups.status_code == 200:
-    for g in r_groups.json().get("data", []):
-        gid = g.get("id")
-        group_ids.append(gid)
-        print("  Group:", gid, g.get("attributes", {}).get("referenceName"))
-        # Check subscriptions in this group
-        r_subs = requests.get(f"https://api.appstoreconnect.apple.com/v1/subscriptionGroups/{gid}/subscriptions", headers=HEADERS)
-        print(f"    Subscriptions in group {gid}:", r_subs.status_code)
-        if r_subs.status_code == 200:
-            for s in r_subs.json().get("data", []):
-                print(f"      Sub: {s.get('id')} - {s.get('attributes', {}).get('productId')} (State: {s.get('attributes', {}).get('state')})")
+# Add review note to subscription 6818063327 and 6818063612
+for sid in ["6818063327", "6818063612"]:
+    patch_payload = {
+        "data": {
+            "type": "subscriptions",
+            "id": sid,
+            "attributes": {
+                "reviewNote": "Annual and monthly subscriptions unlock full clinical plant pathology and unlimited plant diagnosis."
+            }
+        }
+    }
+    r = requests.patch(f"https://api.appstoreconnect.apple.com/v1/subscriptions/{sid}", json=patch_payload, headers=HEADERS)
+    print(f"Patch reviewNote on {sid}: HTTP {r.status_code}")
 
-# 2. Check group relationship of annual sub 6818063327
-r_sub_g = requests.get("https://api.appstoreconnect.apple.com/v1/subscriptions/6818063327/group", headers=HEADERS)
-print("Annual sub group:", r_sub_g.status_code, r_sub_g.text)
-
-# 3. Check availability endpoint: POST subscriptionAvailabilities
-# In ASC API, to make a subscription available, you POST /v1/subscriptionAvailabilities
-# Check if availability exists
-avail_r = requests.get("https://api.appstoreconnect.apple.com/v1/subscriptions/6818063327?include=subscriptionAvailability", headers=HEADERS)
-print("include subscriptionAvailability:", avail_r.status_code)
-if avail_r.status_code == 200:
-    print(json.dumps(avail_r.json().get("included", []), indent=2))
+# Check subscription details
+r = requests.get("https://api.appstoreconnect.apple.com/v1/subscriptions/6818063327?include=subscriptionLocalizations,appStoreReviewScreenshot,prices", headers=HEADERS)
+if r.status_code == 200:
+    data = r.json()
+    print("Annual Sub attrs:", json.dumps(data.get("data", {}).get("attributes"), indent=2))
+    print("Included types:", [x.get("type") for x in data.get("included", [])])
