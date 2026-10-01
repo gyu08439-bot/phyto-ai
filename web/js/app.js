@@ -474,30 +474,10 @@ class FloraApp {
 
   initDashboard() {
     this.renderGardenList();
-    this.updateDashboardProState();
 
     window.addEventListener("flora:entitlement_updated", () => {
-      this.updateDashboardProState();
       this.renderGardenList();
     });
-
-    const proHeaderBtn = document.getElementById("btn-pro-header");
-    if (proHeaderBtn) {
-      proHeaderBtn.addEventListener("click", () => {
-        if (!purchasesManager.isPro) {
-          this.showPaywall("dashboard_header_badge");
-        } else {
-          alert("✓ Flora Pro Active · All Features & Scans Unlocked");
-        }
-      });
-    }
-
-    const upgradeBannerBtn = document.getElementById("btn-dash-upgrade");
-    if (upgradeBannerBtn) {
-      upgradeBannerBtn.addEventListener("click", () => {
-        this.showPaywall("dashboard_upgrade_banner");
-      });
-    }
 
     const vitalityCard = document.querySelector(".hero-vitality-card");
     if (vitalityCard) {
@@ -517,26 +497,6 @@ class FloraApp {
         this.renderGardenList();
       });
     });
-  }
-
-  updateDashboardProState() {
-    const isPro = purchasesManager.isPro;
-    const banner = document.getElementById("dashboard-pro-banner");
-    const proBtn = document.getElementById("btn-pro-header");
-
-    if (banner) {
-      banner.style.display = isPro ? "none" : "flex";
-    }
-
-    if (proBtn) {
-      if (isPro) {
-        proBtn.textContent = "👑 PRO ACTIVE";
-        proBtn.classList.add("active-pro");
-      } else {
-        proBtn.textContent = "👑 PRO";
-        proBtn.classList.remove("active-pro");
-      }
-    }
   }
 
   renderGardenList() {
