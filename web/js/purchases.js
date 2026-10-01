@@ -107,16 +107,36 @@ class PurchasesManager {
   _syncCustomerInfo(customerInfo) {
     if (!customerInfo) return;
     this.customerInfo = customerInfo;
-    const active =
-      customerInfo.entitlements &&
-      customerInfo.entitlements.active &&
-      !!customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlementId];
 
-    this.isPro = active;
-    localStorage.setItem("flora_pro_subscriber", active ? "true" : "false");
-    window.dispatchEvent(
-      new CustomEvent("flora:entitlement_updated", { detail: { isPro: active } })
+    const hasConfigured = !!(
+      customerInfo.entitlements?.active &&
+      customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlementId]
     );
+
+    const hasAnyEntitlement = !!(
+      customerInfo.entitlements?.active &&
+      Object.keys(customerInfo.entitlements.active).length > 0
+    );
+
+    const hasActiveSub = !!(
+      customerInfo.activeSubscriptions &&
+      customerInfo.activeSubscriptions.length > 0
+    );
+
+    const hasFloraProduct = !!(
+      customerInfo.allPurchasedProductIdentifiers &&
+      customerInfo.allPurchasedProductIdentifiers.some((id) => id.includes("flora"))
+    );
+
+    const active = hasConfigured || hasAnyEntitlement || hasActiveSub || hasFloraProduct;
+
+    if (active) {
+      this.isPro = true;
+      localStorage.setItem("flora_pro_subscriber", "true");
+      window.dispatchEvent(
+        new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
+      );
+    }
   }
 
   /**
@@ -258,8 +278,15 @@ class PurchasesManager {
         const info = result?.customerInfo || result;
         this._syncCustomerInfo(info);
 
+        // Apple StoreKit purchase flow completed successfully
+        this.isPro = true;
+        localStorage.setItem("flora_pro_subscriber", "true");
+        window.dispatchEvent(
+          new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
+        );
+
         return {
-          success: this.isPro,
+          success: true,
           customerInfo: info,
           cancelled: false
         };
@@ -306,6 +333,7 @@ class PurchasesManager {
       try {
         const result = await this.plugin.restorePurchases();
         const info = result?.customerInfo || result;
+        this._syncCustomerInfo(info);
         if (this.isPro) {
           return {
             success: true,
