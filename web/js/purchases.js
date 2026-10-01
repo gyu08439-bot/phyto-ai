@@ -5,7 +5,7 @@
 
 export const REVENUECAT_CONFIG = {
   // Production RevenueCat Public iOS Key (starts with appl_)
-  apiKey: window.FLORA_REVENUECAT_API_KEY || "appl_FloraAiProductionKey",
+  apiKey: window.FLORA_REVENUECAT_API_KEY || "appl_NPPeOiTLBFUXyTwTfmDXxlAZkOp",
   entitlementId: "pro_access",
   products: {
     yearly: {
