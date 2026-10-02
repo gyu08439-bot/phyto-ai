@@ -123,7 +123,7 @@
 
         <!-- Footer: Restore & Apple Guideline 3.1.2 Legal Disclosure -->
         <button class="pw-restore" id="paywall-restore-btn">Restore Purchases</button>
-        <p class="pw-legal" id="paywall-trial-note">Payment charged to Apple ID. Renews automatically unless canceled in App Store settings at least 24h before period ends. 3 days free, then $29.99/yr. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a></p>
+        <p class="pw-legal" id="paywall-trial-note">Payment charged to Apple ID. Auto-renews unless canceled in App Store at least 24h before period ends. 3 days free, then $29.99/yr. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a></p>
       </div>
     </section>
 
@@ -424,16 +424,19 @@
     <!-- 10. MODAL: SETTINGS & LEGAL (Apple Guideline 3.1.2 Compliance) -->
     <div id="modal-settings" class="modal-overlay">
       <div class="modal-card modal-settings-card">
+        <div class="modal-drag-pill"></div>
         <div class="modal-head">
           <div class="settings-title-group">
             <img src="assets/app_icon.png" alt="Flora AI" class="settings-avatar">
             <div>
               <h2 class="title-medium" style="margin: 0; font-size: 20px;">Settings</h2>
-              <span class="settings-version">Flora AI v1.0.0 (Build 57)</span>
+              <span class="settings-version">Flora AI v1.0.0</span>
             </div>
           </div>
           <button id="btn-close-settings-modal" class="btn-close-sm" aria-label="Close Settings">✕</button>
         </div>
+
+        <div class="modal-settings-body">
 
         <!-- Pro Subscription Status Card -->
         <div class="settings-pro-card" id="settings-pro-card">
@@ -524,6 +527,7 @@
 
         <div class="settings-footer-note">
           Subscriptions auto-renew through Apple StoreKit. Manage or cancel anytime in iPhone Settings &gt; Apple ID &gt; Subscriptions.
+        </div>
         </div>
       </div>
     </div>

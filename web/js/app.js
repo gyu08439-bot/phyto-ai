@@ -264,14 +264,14 @@ class FloraApp {
     if (this.selectedPlan === "yearly") {
       if (isTrialEligible) {
         if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Renews automatically unless canceled in App Store settings at least 24h before period ends. 3 days free, then ${yearlyPrice}/yr. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
+        if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Auto-renews unless canceled in App Store at least 24h before period ends. 3 days free, then ${yearlyPrice}/yr. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
       } else {
         if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${yearlyPrice} / yr</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Renews automatically yearly (${yearlyPrice}/yr) unless canceled in App Store settings at least 24h before period ends. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
+        if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Auto-renews yearly (${yearlyPrice}/yr) unless canceled in App Store at least 24h before period ends. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
       }
     } else {
       if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${monthlyPrice} / mo</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Renews automatically monthly (${monthlyPrice}/mo) unless canceled in App Store settings at least 24h before period ends. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
+      if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Auto-renews monthly (${monthlyPrice}/mo) unless canceled in App Store at least 24h before period ends. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
     }
   }
 
@@ -777,6 +777,12 @@ class FloraApp {
       closeBtn.addEventListener("click", () => modal.classList.remove("active"));
     }
 
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("active");
+      });
+    }
+
     if (saveBtn && modal) {
       saveBtn.addEventListener("click", () => {
         const nickname = document.getElementById("add-plant-nickname").value.trim() || "My Plant";
@@ -823,6 +829,12 @@ class FloraApp {
 
     if (closeBtn && modal) {
       closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+    }
+
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("active");
+      });
     }
   }
 
@@ -881,6 +893,13 @@ class FloraApp {
 
     if (closeBtn && modal) {
       closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+    }
+
+    // Tap backdrop to dismiss modal
+    if (modal) {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("active");
+      });
     }
 
     if (restoreBtn) {
