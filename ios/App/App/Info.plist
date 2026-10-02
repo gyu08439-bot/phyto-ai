@@ -49,19 +49,6 @@
 	<string>Flora AI needs photo library access to analyze saved photos of your plants.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>CFBundleIcons</key>
-	<dict>
-		<key>CFBundlePrimaryIcon</key>
-		<dict>
-			<key>CFBundleIconFiles</key>
-			<array>
-				<string>AppIcon-60x60</string>
-				<string>AppIcon-512</string>
-				<string>AppIcon</string>
-			</array>
-			<key>CFBundleIconName</key>
-			<string>AppIcon</string>
-		</dict>
-	</dict>
 </dict>
 </plist>
+
