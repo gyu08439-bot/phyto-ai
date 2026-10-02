@@ -802,7 +802,31 @@ class FloraApp {
     if (!listEl) return;
     listEl.innerHTML = "";
 
-    // 1. Garden Plants
+    // 1. Reset / Ambient Option (Always available at the top)
+    const ambientItem = document.createElement("div");
+    ambientItem.className = "lux-picker-item";
+    ambientItem.innerHTML = `
+      <div class="lux-picker-item-left">
+        <span class="lux-picker-item-icon" style="font-size: 26px;">💡</span>
+        <div>
+          <div class="lux-picker-item-name">General Ambient Light</div>
+          <div class="lux-picker-item-sub">Measure room illumination without plant filter</div>
+        </div>
+      </div>
+      <span class="lux-picker-item-lux">Universal</span>
+    `;
+    ambientItem.addEventListener("click", () => {
+      modal.classList.remove("active");
+      if (this.lightMeter) {
+        this.lightMeter.clearTargetPlant();
+        if (!this.lightMeter.active) {
+          this.lightMeter.start();
+        }
+      }
+    });
+    listEl.appendChild(ambientItem);
+
+    // 2. User's Real Garden Plants
     if (this.myPlants && this.myPlants.length > 0) {
       const gTitle = document.createElement("div");
       gTitle.className = "lux-picker-section-title";
@@ -826,6 +850,7 @@ class FloraApp {
         item.addEventListener("click", () => {
           modal.classList.remove("active");
           if (this.lightMeter) {
+            p.photo = thumb;
             this.lightMeter.setTargetPlant(p);
             if (!this.lightMeter.active) {
               this.lightMeter.start();
@@ -834,38 +859,16 @@ class FloraApp {
         });
         listEl.appendChild(item);
       });
-    }
-
-    // 2. Popular Botanical Species
-    const popTitle = document.createElement("div");
-    popTitle.className = "lux-picker-section-title";
-    popTitle.textContent = "Popular Houseplants";
-    listEl.appendChild(popTitle);
-
-    PLANT_DATABASE.forEach(p => {
-      const item = document.createElement("div");
-      item.className = "lux-picker-item";
-      item.innerHTML = `
-        <div class="lux-picker-item-left">
-          <img src="${p.image || 'assets/plants/monstera.jpg'}" class="lux-picker-thumb" alt="${p.commonName}">
-          <div>
-            <div class="lux-picker-item-name">${p.commonName}</div>
-            <div class="lux-picker-item-sub">${p.botanicalName}</div>
-          </div>
-        </div>
-        <span class="lux-picker-item-lux">${p.lightRequirement.split('(')[0].trim()}</span>
+    } else {
+      // Empty garden helper
+      const emptyNote = document.createElement("div");
+      emptyNote.style.cssText = "text-align: center; padding: 24px 16px 12px; color: var(--text-secondary);";
+      emptyNote.innerHTML = `
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary);">No Plants in Your Garden Yet</div>
+        <div style="font-size: 13px; line-height: 1.4;">Add or scan plants in the Garden tab to calibrate lighting for specific specimens.</div>
       `;
-      item.addEventListener("click", () => {
-        modal.classList.remove("active");
-        if (this.lightMeter) {
-          this.lightMeter.setTargetPlant(p);
-          if (!this.lightMeter.active) {
-            this.lightMeter.start();
-          }
-        }
-      });
-      listEl.appendChild(item);
-    });
+      listEl.appendChild(emptyNote);
+    }
   }
 
   renderDiagnosis(plant) {

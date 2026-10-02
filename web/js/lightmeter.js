@@ -76,7 +76,14 @@ export class LightMeter {
     if (this.targetBanner) {
       this.targetBanner.style.display = 'flex';
     }
-    if (this.targetIcon) this.targetIcon.textContent = icon;
+    const photo = plant.photo || plant.image || plant.userPhoto;
+    if (this.targetIcon) {
+      if (photo) {
+        this.targetIcon.innerHTML = `<img src="${photo}" class="lux-target-mini-thumb" alt="${name}">`;
+      } else {
+        this.targetIcon.textContent = icon;
+      }
+    }
     if (this.targetName) this.targetName.textContent = name;
     if (this.targetRange) this.targetRange.textContent = `Need: ${minLux.toLocaleString()} – ${maxLux.toLocaleString()} LUX`;
     
