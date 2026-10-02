@@ -316,6 +316,21 @@ class FloraApp {
     if (this.lastDiagnosedPlant && this.currentScreen === "diagnosis") {
       this.renderDiagnosis(this.lastDiagnosedPlant);
     }
+
+    // After payment / subscription activation: automatically prompt for care notifications
+    if (isPro && localStorage.getItem("flora_notifs_prompted") !== "true") {
+      localStorage.setItem("flora_notifs_prompted", "true");
+      setTimeout(async () => {
+        try {
+          const granted = await notificationsManager.requestPermission();
+          if (granted) {
+            await notificationsManager.rescheduleAllGarden(this.myPlants);
+          }
+        } catch (e) {
+          console.warn("[FloraApp] Notification prompt error:", e);
+        }
+      }, 2500);
+    }
   }
 
   initPaywall() {
@@ -936,55 +951,7 @@ class FloraApp {
       });
     }
 
-    // Care Alerts & Notifications Handlers
-    const toggleNotifs = document.getElementById("toggle-watering-notifs");
-    if (toggleNotifs) {
-      toggleNotifs.checked = notificationsManager.enabled;
-      toggleNotifs.addEventListener("change", async (e) => {
-        await notificationsManager.setEnabled(e.target.checked, this.myPlants);
-      });
-    }
 
-    const timeInput = document.getElementById("input-reminder-time");
-    if (timeInput) {
-      timeInput.value = notificationsManager.reminderTime || "09:30";
-      timeInput.addEventListener("change", (e) => {
-        notificationsManager.setReminderTime(e.target.value);
-        notificationsManager.rescheduleAllGarden(this.myPlants);
-      });
-    }
-
-    const testNotifBtn = document.getElementById("btn-settings-test-notif");
-    if (testNotifBtn) {
-      testNotifBtn.addEventListener("click", async () => {
-        const origContent = testNotifBtn.innerHTML;
-        testNotifBtn.innerHTML = `
-          <div class="settings-row-left">
-            <span class="settings-row-icon">⏳</span>
-            <span>Scheduling Test Alert (3s)...</span>
-          </div>
-        `;
-        try {
-          await notificationsManager.sendTestNotification();
-          testNotifBtn.innerHTML = `
-            <div class="settings-row-left">
-              <span class="settings-row-icon">✓</span>
-              <span style="color: #00F076;">Check Lock Screen in 3s!</span>
-            </div>
-          `;
-        } catch (err) {
-          testNotifBtn.innerHTML = `
-            <div class="settings-row-left">
-              <span class="settings-row-icon">⚠️</span>
-              <span style="color: #FFE600;">Alert Scheduled</span>
-            </div>
-          `;
-        }
-        setTimeout(() => {
-          testNotifBtn.innerHTML = origContent;
-        }, 3500);
-      });
-    }
 
     // App Store Native Rating Prompt Trigger
     const rateBtn = document.getElementById("btn-settings-rate-app");
