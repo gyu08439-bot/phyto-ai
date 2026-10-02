@@ -21,6 +21,7 @@ class FloraApp {
     this.initDashboard();
     this.initTabBar();
     this.initAddPlantModal();
+    this.initLuxPlantPickerModal();
     this.initPurchases();
 
     // Skip onboarding quiz on app relaunch if completed previously
@@ -730,7 +731,99 @@ class FloraApp {
     }
   }
 
+  initLuxPlantPickerModal() {
+    const openBtn = document.getElementById("btn-open-lux-plant-picker");
+    const modal = document.getElementById("modal-select-lux-plant");
+    const closeBtn = document.getElementById("btn-close-lux-picker");
+
+    if (openBtn && modal) {
+      openBtn.addEventListener("click", () => {
+        if (!purchasesManager.isPro) {
+          this.showPaywall("luxmeter_plant_picker");
+          return;
+        }
+        this.renderLuxPickerList(modal);
+        modal.classList.add("active");
+      });
+    }
+
+    if (closeBtn && modal) {
+      closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+    }
+  }
+
+  renderLuxPickerList(modal) {
+    const listEl = document.getElementById("lux-picker-list");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+
+    // 1. Garden Plants
+    if (this.myPlants && this.myPlants.length > 0) {
+      const gTitle = document.createElement("div");
+      gTitle.className = "lux-picker-section-title";
+      gTitle.textContent = "Your Garden Plants";
+      listEl.appendChild(gTitle);
+
+      this.myPlants.forEach(p => {
+        const item = document.createElement("div");
+        item.className = "lux-picker-item";
+        item.innerHTML = `
+          <div class="lux-picker-item-left">
+            <span class="lux-picker-item-icon">${p.icon || "🪴"}</span>
+            <div>
+              <div class="lux-picker-item-name">${p.nickname || p.commonName}</div>
+              <div class="lux-picker-item-sub">${p.botanicalName || p.commonName}</div>
+            </div>
+          </div>
+          <span class="lux-picker-item-lux">${p.lightRequirement ? p.lightRequirement.split('(')[0].trim() : "2,500 LUX"}</span>
+        `;
+        item.addEventListener("click", () => {
+          modal.classList.remove("active");
+          if (this.lightMeter) {
+            this.lightMeter.setTargetPlant(p);
+            if (!this.lightMeter.active) {
+              this.lightMeter.start();
+            }
+          }
+        });
+        listEl.appendChild(item);
+      });
+    }
+
+    // 2. Popular Botanical Species
+    const popTitle = document.createElement("div");
+    popTitle.className = "lux-picker-section-title";
+    popTitle.textContent = "Popular Houseplants";
+    listEl.appendChild(popTitle);
+
+    PLANT_DATABASE.forEach(p => {
+      const item = document.createElement("div");
+      item.className = "lux-picker-item";
+      item.innerHTML = `
+        <div class="lux-picker-item-left">
+          <span class="lux-picker-item-icon">${p.icon}</span>
+          <div>
+            <div class="lux-picker-item-name">${p.commonName}</div>
+            <div class="lux-picker-item-sub">${p.botanicalName}</div>
+          </div>
+        </div>
+        <span class="lux-picker-item-lux">${p.lightRequirement.split('(')[0].trim()}</span>
+      `;
+      item.addEventListener("click", () => {
+        modal.classList.remove("active");
+        if (this.lightMeter) {
+          this.lightMeter.setTargetPlant(p);
+          if (!this.lightMeter.active) {
+            this.lightMeter.start();
+          }
+        }
+      });
+      listEl.appendChild(item);
+    });
+  }
+
   renderDiagnosis(plant) {
+
     this.lastDiagnosedPlant = plant;
 
     const nameEl = document.getElementById("diag-plant-name");
@@ -818,6 +911,19 @@ class FloraApp {
     const waterAction = document.getElementById("diag-action-water");
     if (waterAction) waterAction.textContent = rx[0]?.action || "Pause watering for 4–5 days. Wait until the top 2 inches of soil are dry.";
 
+    // Seasonal Watering Calculation
+    const baseInterval = plant.wateringInterval || 8;
+    const summerMin = Math.max(3, Math.round(baseInterval * 0.8));
+    const summerMax = Math.max(4, Math.round(baseInterval * 1.05));
+    const winterMin = Math.round(baseInterval * 1.4);
+    const winterMax = Math.round(baseInterval * 1.85);
+
+    const waterSummerEl = document.getElementById("diag-water-summer");
+    if (waterSummerEl) waterSummerEl.textContent = `Every ${summerMin}–${summerMax}d`;
+
+    const waterWinterEl = document.getElementById("diag-water-winter");
+    if (waterWinterEl) waterWinterEl.textContent = `Every ${winterMin}–${winterMax}d`;
+
     const lightAction = document.getElementById("diag-action-light");
     if (lightAction) lightAction.textContent = rx[1]?.action || "Relocate to bright indirect sunlight and improve room ventilation to dry leaf surfaces.";
 
@@ -845,10 +951,16 @@ class FloraApp {
       };
     }
 
+    const fertValEl = document.getElementById("diag-fert-val");
+    if (fertValEl) {
+      fertValEl.textContent = plant.fertilizer || "Balanced NPK 20-20-20 every 14 days during active growth (March–Oct). Pause completely in winter.";
+    }
+
     const treatmentAction = document.getElementById("diag-action-treatment");
     const treatmentBlock = document.getElementById("diag-step-treatment");
     const lockedBanner = document.getElementById("diag-pro-locked-banner");
     const isPro = purchasesManager.isPro;
+
 
     if (treatmentAction) {
       if (isPro) {

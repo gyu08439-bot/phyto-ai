@@ -258,6 +258,10 @@
             <div class="action-content">
               <div class="action-name">1. Adjust Watering</div>
               <p id="diag-action-water" class="action-desc">Pause watering for 4–5 days. Wait until the top 2 inches of soil are dry.</p>
+              <div class="diag-seasonal-water-row">
+                <span class="seasonal-pill summer">☀️ Spring/Summer: <strong id="diag-water-summer">Every 7–9d</strong></span>
+                <span class="seasonal-pill winter">❄️ Fall/Winter: <strong id="diag-water-winter">Every 14–18d</strong></span>
+              </div>
             </div>
           </div>
 
@@ -285,8 +289,13 @@
             <div class="action-content">
               <div class="action-name">3. Clinical Treatment Protocol</div>
               <p id="diag-action-treatment" class="action-desc">Wipe affected foliage with dilute copper fungicide or organic neem oil spray.</p>
+              <div class="diag-fert-tag" id="diag-fert-box">
+                <span class="fert-label">FERTILIZER & NUTRITION:</span>
+                <span class="fert-val" id="diag-fert-val">Balanced NPK 20-20-20 every 14 days during active growth (March–Oct). Pause in winter.</span>
+              </div>
             </div>
           </div>
+
 
           <!-- Pro Lock Banner if not subscribed -->
           <div id="diag-pro-locked-banner" class="diag-pro-banner" style="display: none;">
@@ -348,6 +357,10 @@
       <button id="lux-start-btn" class="btn-secondary" style="margin-top: 16px;">
         <span>Start Camera Meter</span>
       </button>
+
+      <button id="btn-open-lux-plant-picker" class="btn-picker-pill" style="margin-top: 10px;" type="button">
+        <span>🪴 Select Plant to Calibrate Spot</span>
+      </button>
     </section>
 
     <!-- 8. MODAL: ADD PLANT -->
@@ -370,6 +383,21 @@
         </div>
       </div>
     </div>
+
+    <!-- 9. MODAL: SELECT PLANT FOR LUXMETER -->
+    <div id="modal-select-lux-plant" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h2 class="title-medium">Select Plant for Light Spot</h2>
+          <button id="btn-close-lux-picker" class="btn-close-sm">✕</button>
+        </div>
+        <p class="modal-sub" style="font-size: 13px; color: var(--text-secondary); margin: 6px 0 14px; line-height: 1.4;">Select a plant from your collection or popular species to calibrate window or spot lighting precisely against its biological lux requirements.</p>
+        <div id="lux-picker-list" class="lux-picker-scroll">
+          <!-- Dynamically populated from garden & database -->
+        </div>
+      </div>
+    </div>
+
 
     <!-- NATIVE BOTTOM TAB BAR -->
     <nav id="bottom-tab-bar" class="tab-bar" style="display: none;">

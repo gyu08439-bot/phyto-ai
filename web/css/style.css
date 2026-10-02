@@ -2069,3 +2069,157 @@ html, body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Plant Picker Button in Luxmeter */
+.btn-picker-pill {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  font-size: 14.5px;
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-picker-pill:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 240, 118, 0.3);
+}
+
+/* Plant Picker Modal */
+.lux-picker-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.lux-picker-section-title {
+  font-size: 11.5px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 10px 0 4px;
+}
+
+.lux-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lux-picker-item:active {
+  transform: scale(0.98);
+  background: rgba(0, 240, 118, 0.1);
+  border-color: rgba(0, 240, 118, 0.35);
+}
+
+.lux-picker-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lux-picker-item-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.lux-picker-item-name {
+  font-size: 15px;
+  font-weight: 750;
+  color: #FFFFFF;
+}
+
+.lux-picker-item-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.lux-picker-item-lux {
+  font-size: 12px;
+  font-weight: 800;
+  color: #00F076;
+  background: rgba(0, 240, 118, 0.12);
+  border: 1px solid rgba(0, 240, 118, 0.25);
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Seasonal Watering & Care in Diagnosis */
+.diag-seasonal-water-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.seasonal-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.seasonal-pill.summer {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: #FBBF24;
+}
+
+.seasonal-pill.winter {
+  background: rgba(96, 165, 250, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  color: #60A5FA;
+}
+
+.diag-fert-tag {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fert-label {
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.fert-val {
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.35;
+}
+
+
