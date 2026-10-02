@@ -738,7 +738,21 @@ class FloraApp {
 
     const score = plant.healthScore || 72;
     const healthNumEl = document.getElementById("diag-health-number");
-    if (healthNumEl) healthNumEl.textContent = `${score}%`;
+    if (healthNumEl) {
+      healthNumEl.textContent = "0%";
+      const startTime = performance.now();
+      const duration = 700;
+      const animateHealth = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const cur = Math.round(eased * score);
+        healthNumEl.textContent = `${cur}%`;
+        if (progress < 1) requestAnimationFrame(animateHealth);
+      };
+      setTimeout(() => requestAnimationFrame(animateHealth), 80);
+    }
 
     const statusBadge = document.getElementById("diag-status-badge");
     const statusDot = document.getElementById("diag-status-dot");
