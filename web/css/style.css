@@ -1726,40 +1726,53 @@ html, body {
   transform: translateX(-50%);
   width: 100%;
   max-width: 440px;
-  height: calc(64px + var(--safe-bottom));
-  background: rgba(12, 12, 14, 0.88);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  height: calc(70px + var(--safe-bottom));
+  background: rgba(12, 12, 14, 0.92);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   border-top: 1px solid var(--surface-border);
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: stretch;
+  padding: 0;
   padding-bottom: var(--safe-bottom);
   z-index: 100;
+  box-sizing: border-box;
 }
 
 .tab-item {
+  flex: 1 1 0;
+  width: 33.3333%;
+  max-width: 33.3333%;
   background: transparent;
   border: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 8px 16px;
-  transition: all 0.2s ease;
+  padding: 8px 0 6px 0;
+  margin: 0;
+  transition: color 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tab-icon {
-  font-size: 22px;
+  font-size: 26px;
+  line-height: 1.15;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.15s ease;
 }
 
 .tab-text {
-  font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.3px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
 }
 
 .tab-item.active {
@@ -1767,7 +1780,7 @@ html, body {
 }
 
 .tab-item.active .tab-icon {
-  transform: scale(1.15);
+  transform: scale(1.12);
 }
 
 /* 9. Modal Overlay */

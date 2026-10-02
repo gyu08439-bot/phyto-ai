@@ -264,14 +264,14 @@ class FloraApp {
     if (this.selectedPlan === "yearly") {
       if (isTrialEligible) {
         if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Auto-renews until canceled in App Store. 3 days free, then ${yearlyPrice}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+        if (trialNote) trialNote.innerHTML = `Auto-renews until canceled in App Store. 3 days free, then ${yearlyPrice}/year. <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use (EULA)</a> · <a href="https://flora-ai-6e5.pages.dev/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>`;
       } else {
         if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${yearlyPrice} / yr</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Plans auto-renew yearly until canceled in App Store. ${yearlyPrice}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew yearly until canceled in App Store. ${yearlyPrice}/year. <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use (EULA)</a> · <a href="https://flora-ai-6e5.pages.dev/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>`;
       }
     } else {
       if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${monthlyPrice} / mo</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Plans auto-renew monthly until canceled in App Store. ${monthlyPrice}/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew monthly until canceled in App Store. ${monthlyPrice}/month. <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">Terms of Use (EULA)</a> · <a href="https://flora-ai-6e5.pages.dev/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>`;
     }
   }
 
