@@ -1,4 +1,5 @@
 import { purchasesManager } from "./purchases.js";
+import { notificationsManager } from "./notifications.js";
 import { ONBOARDING_QUESTIONS, PLANT_DATABASE } from "./data.js";
 import { PlantScanner } from "./scanner.js";
 import { LightMeter } from "./lightmeter.js";
@@ -24,6 +25,21 @@ class FloraApp {
     this.initLuxPlantPickerModal();
     this.initSettings();
     this.initPurchases();
+
+    // Initialize smart plant care notifications and schedule active garden
+    notificationsManager.init().then(() => {
+      notificationsManager.rescheduleAllGarden(this.myPlants);
+    });
+
+    window.addEventListener("flora:open_plant", (e) => {
+      const pid = e.detail?.plantId;
+      if (pid) {
+        const target = this.myPlants.find(p => p.id === pid);
+        if (target) {
+          this.renderDiagnosis(target);
+        }
+      }
+    });
 
     // Skip onboarding quiz on app relaunch if completed previously
     const hasCompletedOnboarding = localStorage.getItem("flora_onboarding_completed") === "true";
@@ -62,6 +78,9 @@ class FloraApp {
   saveGarden() {
     try {
       localStorage.setItem("flora_garden_v4", JSON.stringify(this.myPlants));
+      if (typeof notificationsManager !== "undefined") {
+        notificationsManager.rescheduleAllGarden(this.myPlants);
+      }
     } catch (e) {
       console.warn("Save failed:", e);
     }
@@ -897,6 +916,74 @@ class FloraApp {
         }, 2500);
       });
     }
+
+    // Care Alerts & Notifications Handlers
+    const toggleNotifs = document.getElementById("toggle-watering-notifs");
+    if (toggleNotifs) {
+      toggleNotifs.checked = notificationsManager.enabled;
+      toggleNotifs.addEventListener("change", async (e) => {
+        await notificationsManager.setEnabled(e.target.checked, this.myPlants);
+      });
+    }
+
+    const timeInput = document.getElementById("input-reminder-time");
+    if (timeInput) {
+      timeInput.value = notificationsManager.reminderTime || "09:30";
+      timeInput.addEventListener("change", (e) => {
+        notificationsManager.setReminderTime(e.target.value);
+        notificationsManager.rescheduleAllGarden(this.myPlants);
+      });
+    }
+
+    const testNotifBtn = document.getElementById("btn-settings-test-notif");
+    if (testNotifBtn) {
+      testNotifBtn.addEventListener("click", async () => {
+        const origContent = testNotifBtn.innerHTML;
+        testNotifBtn.innerHTML = `
+          <div class="settings-row-left">
+            <span class="settings-row-icon">⏳</span>
+            <span>Scheduling Test Alert (3s)...</span>
+          </div>
+        `;
+        try {
+          await notificationsManager.sendTestNotification();
+          testNotifBtn.innerHTML = `
+            <div class="settings-row-left">
+              <span class="settings-row-icon">✓</span>
+              <span style="color: #00F076;">Check Lock Screen in 3s!</span>
+            </div>
+          `;
+        } catch (err) {
+          testNotifBtn.innerHTML = `
+            <div class="settings-row-left">
+              <span class="settings-row-icon">⚠️</span>
+              <span style="color: #FFE600;">Alert Scheduled</span>
+            </div>
+          `;
+        }
+        setTimeout(() => {
+          testNotifBtn.innerHTML = origContent;
+        }, 3500);
+      });
+    }
+
+    // App Store Native Rating Prompt Trigger
+    const rateBtn = document.getElementById("btn-settings-rate-app");
+    if (rateBtn) {
+      rateBtn.addEventListener("click", async () => {
+        const origContent = rateBtn.innerHTML;
+        rateBtn.innerHTML = `
+          <div class="settings-row-left">
+            <span class="settings-row-icon">⭐</span>
+            <span style="color: #FFE600;">Opening App Store...</span>
+          </div>
+        `;
+        await notificationsManager.requestStoreReview(true);
+        setTimeout(() => {
+          rateBtn.innerHTML = origContent;
+        }, 2000);
+      });
+    }
   }
 
   renderLuxPickerList(modal) {
@@ -1188,6 +1275,20 @@ class FloraApp {
           this.showScreen("dashboard");
         };
       }
+    }
+
+    // Schedule clinical recovery follow-up notification in 3 days if plant has a condition
+    if (plant.condition && !plant.condition.toLowerCase().includes("healthy")) {
+      notificationsManager.scheduleTreatmentFollowUp(plant, 3);
+    }
+
+    // High-satisfaction moment: Trigger native App Store rating prompt (cooldown handled)
+    const scanCount = parseInt(localStorage.getItem("flora_scans_count") || "0", 10) + 1;
+    localStorage.setItem("flora_scans_count", String(scanCount));
+    if (scanCount === 1 || scanCount === 3) {
+      setTimeout(() => {
+        notificationsManager.requestStoreReview(false);
+      }, 3000);
     }
 
     this.showScreen("diagnosis");
