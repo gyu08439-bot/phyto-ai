@@ -786,6 +786,23 @@ html, body {
 }
 
 /* Minimalist Footer */
+.pw-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.pw-trust svg {
+  color: var(--emerald);
+  flex-shrink: 0;
+}
+
 .pw-restore {
   border: 0;
   background: transparent;
