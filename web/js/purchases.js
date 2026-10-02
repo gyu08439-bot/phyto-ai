@@ -133,6 +133,13 @@ class PurchasesManager {
     if (active) {
       this.isPro = true;
       localStorage.setItem("flora_pro_subscriber", "true");
+      if (customerInfo.latestExpirationDate) {
+        localStorage.setItem("flora_subscription_expires", customerInfo.latestExpirationDate);
+      } else if (!localStorage.getItem("flora_subscription_expires")) {
+        const d = new Date();
+        d.setFullYear(d.getFullYear() + 1);
+        localStorage.setItem("flora_subscription_expires", d.toISOString());
+      }
       window.dispatchEvent(
         new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
       );
@@ -367,6 +374,43 @@ class PurchasesManager {
       new CustomEvent("flora:entitlement_updated", { detail: { isPro: true } })
     );
     return { success: true, simulated: true };
+  }
+
+  /**
+   * Get subscription expiration ISO date string
+   */
+  getSubscriptionExpirationDate() {
+    let exp = localStorage.getItem("flora_subscription_expires");
+    if (!exp && this.customerInfo) {
+      exp = this.customerInfo.latestExpirationDate ||
+            this.customerInfo.entitlements?.active?.[REVENUECAT_CONFIG.entitlementId]?.expirationDate ||
+            Object.values(this.customerInfo.entitlements?.active || {})[0]?.expirationDate;
+    }
+    if (!exp && this.isPro) {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() + 1);
+      exp = d.toISOString();
+      localStorage.setItem("flora_subscription_expires", exp);
+    }
+    return exp;
+  }
+
+  /**
+   * Format localized expiration date string (e.g. "1 октября 2027 г." or "Oct 1, 2027")
+   */
+  getFormattedExpirationDate() {
+    const exp = this.getSubscriptionExpirationDate();
+    if (!exp) return null;
+    try {
+      const date = new Date(exp);
+      const isRu = (navigator.language || "").startsWith("ru");
+      if (isRu) {
+        return date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+      }
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch (e) {
+      return null;
+    }
   }
 
   /**

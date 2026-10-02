@@ -56,8 +56,11 @@
       <div class="pw-hero-wrap">
         <img src="assets/paywall_monstera_split.jpg" alt="Botanical Vitality" class="pw-hero-img">
         <div class="pw-hero-fade"></div>
+      </div>
 
-        <!-- Split Leaf Comparison Badges (Positioned below the leaf) -->
+      <!-- Main Body Container -->
+      <div class="pw-body">
+        <!-- Split Leaf Comparison Badges (Positioned below the leaf, perfectly centered) -->
         <div class="pw-leaf-badges">
           <div class="pw-leaf-badge left">
             <span class="pw-badge-dot dry"></span>
@@ -68,14 +71,7 @@
             <span>WITH PRO</span>
           </div>
         </div>
-      </div>
 
-      <!-- Main Body Container -->
-      <div class="pw-body">
-        <div class="pw-eyebrow">
-          <img src="assets/app_icon.png" alt="Flora Pro" class="pw-eyebrow-avatar">
-          <span>FLORA AI PRO</span>
-        </div>
         <h1 class="pw-headline">Never Kill Another Plant</h1>
         <p class="pw-subheadline">Instant botanical diagnostics, clinical recovery protocols, and camera luxmeter.</p>
 
@@ -133,6 +129,10 @@
           <div>
             <div class="date-label">MY COLLECTION</div>
             <h1 class="title-large">My Garden</h1>
+            <div id="dashboard-pro-status" class="dash-pro-status-badge" style="display: none;">
+              <span class="pro-status-dot"></span>
+              <span id="pro-status-date-label">Flora Pro Active</span>
+            </div>
           </div>
         </div>
         <div class="dashboard-top-actions">

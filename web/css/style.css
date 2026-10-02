@@ -328,7 +328,7 @@ body {
 .pw-hero-wrap {
   position: relative;
   width: 100%;
-  height: clamp(175px, 25vh, 220px);
+  height: clamp(210px, 29vh, 260px);
   overflow: hidden;
   background: #000000;
   flex-shrink: 0;
@@ -336,7 +336,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  padding-top: calc(var(--safe-top) + 6px);
+  padding-top: calc(var(--safe-top) + 2px);
 }
 
 .pw-hero-img {
@@ -350,21 +350,19 @@ body {
 .pw-hero-fade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, transparent 25%, transparent 70%, #000000 100%);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0%, transparent 20%, transparent 70%, #000000 100%);
   pointer-events: none;
 }
 
-/* Split Leaf Comparison Badges (Positioned below the leaf) */
+/* Split Leaf Comparison Badges (Positioned below the leaf, perfectly centered) */
 .pw-leaf-badges {
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  right: 0;
+  position: relative;
   display: flex;
   justify-content: center;
-  gap: 24px;
   align-items: center;
-  pointer-events: none;
+  gap: 16px;
+  width: 100%;
+  margin: 6px auto 10px auto;
   z-index: 6;
 }
 
@@ -460,24 +458,6 @@ body {
   overflow: hidden;
 }
 
-.pw-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 3px 12px;
-  border-radius: 999px;
-  background: rgba(0, 240, 118, 0.12);
-  border: 1px solid rgba(0, 240, 118, 0.32);
-  font-size: 10.5px;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  color: #00F076;
-  margin-top: 6px;
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  box-shadow: 0 0 14px rgba(0, 240, 118, 0.16);
-}
 
 .pw-headline {
   font-size: clamp(21px, 2.8vh, 25px);
@@ -741,6 +721,30 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.dash-pro-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 240, 118, 0.08);
+  border: 1px solid rgba(0, 240, 118, 0.28);
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #00F076;
+  letter-spacing: 0.02em;
+}
+
+.pro-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00F076;
+  box-shadow: 0 0 8px #00F076;
+  flex-shrink: 0;
 }
 
 .hero-vitality-card {

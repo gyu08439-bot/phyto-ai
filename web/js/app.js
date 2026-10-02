@@ -71,6 +71,15 @@ class FloraApp {
   }
 
   showScreen(screenKey) {
+    // Hard paywall lockdown: Only dashboard, paywall, quiz, and computing are accessible without Pro
+    if (!purchasesManager.isPro) {
+      const allowedWithoutPro = ["dashboard", "paywall", "quiz", "computing"];
+      if (!allowedWithoutPro.includes(screenKey)) {
+        this.showPaywall("screen_lock_" + screenKey);
+        return;
+      }
+    }
+
     Object.values(this.screens).forEach(el => {
       if (el) el.classList.remove("active");
     });
@@ -106,11 +115,21 @@ class FloraApp {
 
   initTabBar() {
     document.querySelectorAll(".tab-item").forEach(btn => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (e) => {
         const target = btn.getAttribute("data-target");
-        if (target) {
-          this.showScreen(target);
+        if (!target) return;
+        if (target === "dashboard") {
+          this.showScreen("dashboard");
+          return;
         }
+        // Clicking on Camera (Scan) or Luxmeter must immediately show Paywall if not Pro
+        if (!purchasesManager.isPro) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.showPaywall("tab_" + target);
+          return;
+        }
+        this.showScreen(target);
       });
     });
   }
@@ -262,6 +281,8 @@ class FloraApp {
   }
 
   handleEntitlementUpdate(isPro) {
+    this.renderProStatusBadge();
+    this.renderGardenList();
     if (this.lastDiagnosedPlant && this.currentScreen === "diagnosis") {
       this.renderDiagnosis(this.lastDiagnosedPlant);
     }
@@ -366,12 +387,7 @@ class FloraApp {
     if (closeBtn) {
       closeBtn.addEventListener("click", () => {
         localStorage.setItem("flora_onboarding_completed", "true");
-        if (this.lastDiagnosedPlant && this.currentScreen === "paywall") {
-          this.showScreen("diagnosis");
-          this.renderDiagnosis(this.lastDiagnosedPlant);
-        } else {
-          this.showScreen("dashboard");
-        }
+        this.showScreen("dashboard");
       });
     }
   }
@@ -379,8 +395,8 @@ class FloraApp {
   initScanner() {
     this.scanner = new PlantScanner({
       beforeScan: () => {
-        if (!purchasesManager.isPro && this.freeScansUsed >= 1) {
-          this.showPaywall("scanner_limit");
+        if (!purchasesManager.isPro) {
+          this.showPaywall("scanner_pro_required");
           return false;
         }
         return true;
@@ -424,9 +440,10 @@ class FloraApp {
     const captureBtn = document.getElementById("btn-capture-scan");
     if (captureBtn) {
       captureBtn.addEventListener("click", (e) => {
-        if (!purchasesManager.isPro && this.freeScansUsed >= 1) {
+        if (!purchasesManager.isPro) {
           e.stopImmediatePropagation();
-          this.showPaywall("scanner_limit");
+          e.preventDefault();
+          this.showPaywall("scanner_capture");
         }
       }, true);
     }
@@ -472,10 +489,33 @@ class FloraApp {
     }
   }
 
+  renderProStatusBadge() {
+    const badgeEl = document.getElementById("dashboard-pro-status");
+    const labelEl = document.getElementById("pro-status-date-label");
+    if (!badgeEl || !labelEl) return;
+
+    if (purchasesManager.isPro) {
+      const expDate = purchasesManager.getFormattedExpirationDate();
+      const isRu = (navigator.language || "").startsWith("ru");
+      if (expDate) {
+        labelEl.textContent = isRu
+          ? `Flora Pro активна до ${expDate}`
+          : `Flora Pro active until ${expDate}`;
+      } else {
+        labelEl.textContent = isRu ? "Flora Pro активна" : "Flora Pro Active";
+      }
+      badgeEl.style.display = "inline-flex";
+    } else {
+      badgeEl.style.display = "none";
+    }
+  }
+
   initDashboard() {
+    this.renderProStatusBadge();
     this.renderGardenList();
 
     window.addEventListener("flora:entitlement_updated", () => {
+      this.renderProStatusBadge();
       this.renderGardenList();
     });
 
@@ -491,15 +531,21 @@ class FloraApp {
 
     document.querySelectorAll(".segment-btn").forEach(btn => {
       btn.addEventListener("click", () => {
+        const filter = btn.getAttribute("data-filter") || "all";
+        if (filter !== "all" && !purchasesManager.isPro) {
+          this.showPaywall("garden_filter_" + filter);
+          return;
+        }
         document.querySelectorAll(".segment-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        this.gardenFilter = btn.getAttribute("data-filter") || "all";
+        this.gardenFilter = filter;
         this.renderGardenList();
       });
     });
   }
 
   renderGardenList() {
+    this.renderProStatusBadge();
     const container = document.getElementById("garden-plants-list");
     const vitalityDisplay = document.getElementById("garden-vitality-score");
     const countDisplay = document.getElementById("garden-count-badge");
@@ -523,6 +569,10 @@ class FloraApp {
       const scanBtn = document.getElementById("btn-empty-scan-first");
       if (scanBtn) {
         scanBtn.addEventListener("click", () => {
+          if (!purchasesManager.isPro) {
+            this.showPaywall("empty_scan_first");
+            return;
+          }
           this.showScreen("scanner");
         });
       }
@@ -574,12 +624,20 @@ class FloraApp {
       `;
 
       el.addEventListener("click", () => {
+        if (!purchasesManager.isPro) {
+          this.showPaywall("garden_plant_detail");
+          return;
+        }
         this.renderDiagnosis(plant);
       });
 
       const waterBtn = el.querySelector(".btn-water-item");
       waterBtn.addEventListener("click", (ev) => {
         ev.stopPropagation();
+        if (!purchasesManager.isPro) {
+          this.showPaywall("garden_water_action");
+          return;
+        }
         this.waterPlant(plant.id, waterBtn);
       });
 
@@ -633,8 +691,8 @@ class FloraApp {
 
     if (openBtn && modal) {
       openBtn.addEventListener("click", () => {
-        if (!purchasesManager.isPro && this.myPlants && this.myPlants.length >= 1) {
-          this.showPaywall("garden_plants_limit");
+        if (!purchasesManager.isPro) {
+          this.showPaywall("garden_add_plant");
           return;
         }
         modal.classList.add("active");
