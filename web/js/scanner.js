@@ -14,6 +14,9 @@ export class PlantScanner {
     this.triggerBtn = document.getElementById("btn-capture-scan");
     this.presetChips = document.querySelectorAll(".preset-chip");
     this.fileInput = document.getElementById("scanner-file-input");
+    this.torchBtn = document.getElementById("btn-toggle-torch");
+    this.torchIcon = document.getElementById("torch-icon");
+    this.torchOn = false;
 
     this.isScanning = false;
     this.stream = null;
@@ -22,6 +25,12 @@ export class PlantScanner {
   }
 
   init() {
+    if (this.torchBtn) {
+      this.torchBtn.addEventListener("click", () => {
+        this.toggleTorch();
+      });
+    }
+
     if (this.triggerBtn) {
       this.triggerBtn.addEventListener("click", () => {
         this.captureAndScan();
@@ -87,6 +96,37 @@ export class PlantScanner {
     if (this.stream) {
       this.stream.getTracks().forEach(t => t.stop());
       this.stream = null;
+    }
+    this.torchOn = false;
+    if (this.torchIcon) this.torchIcon.textContent = "🔦";
+    if (this.torchBtn) {
+      this.torchBtn.style.background = "";
+      this.torchBtn.style.borderColor = "";
+    }
+  }
+
+  async toggleTorch() {
+    if (!this.stream) {
+      await this.startCamera();
+    }
+    if (!this.stream) return;
+    const track = this.stream.getVideoTracks()[0];
+    if (!track) return;
+
+    try {
+      this.torchOn = !this.torchOn;
+      await track.applyConstraints({
+        advanced: [{ torch: this.torchOn }]
+      });
+      if (this.torchIcon) {
+        this.torchIcon.textContent = this.torchOn ? "⚡" : "🔦";
+      }
+      if (this.torchBtn) {
+        this.torchBtn.style.background = this.torchOn ? "rgba(255, 230, 0, 0.2)" : "";
+        this.torchBtn.style.borderColor = this.torchOn ? "#FFE600" : "";
+      }
+    } catch (err) {
+      console.warn("Torch constraint not supported on this device/environment:", err);
     }
   }
 

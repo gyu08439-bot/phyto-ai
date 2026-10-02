@@ -136,6 +136,7 @@
           </div>
         </div>
         <div class="dashboard-top-actions">
+          <button id="btn-open-settings" class="btn-settings-circle" aria-label="Settings">⚙️</button>
           <button id="btn-open-add-plant" class="btn-add-circle">+</button>
         </div>
       </div>
@@ -196,7 +197,9 @@
             <div class="shutter-inner"></div>
           </button>
 
-          <div style="width: 48px;"></div>
+          <button id="btn-toggle-torch" class="btn-gallery-pick" aria-label="Toggle Flashlight">
+            <span id="torch-icon">🔦</span>
+          </button>
         </div>
       </div>
     </section>
@@ -408,6 +411,63 @@
         <p class="modal-sub" style="font-size: 13px; color: var(--text-secondary); margin: 6px 0 14px; line-height: 1.4;">Select a plant from your garden to evaluate window lighting against its biological lux requirements, or choose ambient light.</p>
         <div id="lux-picker-list" class="lux-picker-scroll">
           <!-- Dynamically populated from garden & database -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. MODAL: SETTINGS & LEGAL (Apple Guideline 3.1.2 Compliance) -->
+    <div id="modal-settings" class="modal-overlay">
+      <div class="modal-card modal-settings-card">
+        <div class="modal-head">
+          <div class="settings-title-group">
+            <img src="assets/app_icon.png" alt="Flora AI" class="settings-avatar">
+            <div>
+              <h2 class="title-medium" style="margin: 0; font-size: 20px;">Settings</h2>
+              <span class="settings-version">Flora AI v1.0.0 (Build 57)</span>
+            </div>
+          </div>
+          <button id="btn-close-settings-modal" class="btn-close-sm" aria-label="Close Settings">✕</button>
+        </div>
+
+        <!-- Pro Subscription Status Card -->
+        <div class="settings-pro-card" id="settings-pro-card">
+          <div class="settings-pro-header">
+            <span class="settings-pro-badge" id="settings-pro-badge">PRO STATUS</span>
+            <span class="settings-pro-tier" id="settings-pro-tier">Free Tier</span>
+          </div>
+          <p class="settings-pro-desc" id="settings-pro-desc">Unlock unlimited AI plant scans, clinical recovery protocols, and camera luxmeter.</p>
+          <button class="settings-pro-btn" id="settings-pro-action-btn">Upgrade to Flora Pro</button>
+        </div>
+
+        <!-- Settings Options Stack -->
+        <div class="settings-options-stack">
+          <button class="settings-row-btn" id="btn-settings-restore" type="button">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">🔄</span>
+              <span>Restore Purchases</span>
+            </div>
+            <span class="settings-row-arrow">›</span>
+          </button>
+
+          <a href="privacy.html" class="settings-row-btn">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">🛡️</span>
+              <span>Privacy Policy</span>
+            </div>
+            <span class="settings-row-arrow">›</span>
+          </a>
+
+          <a href="terms.html" class="settings-row-btn">
+            <div class="settings-row-left">
+              <span class="settings-row-icon">📜</span>
+              <span>Terms of Service (EULA)</span>
+            </div>
+            <span class="settings-row-arrow">›</span>
+          </a>
+        </div>
+
+        <div class="settings-footer-note">
+          Subscriptions auto-renew through Apple StoreKit. Manage or cancel anytime in iPhone Settings &gt; Apple ID &gt; Subscriptions.
         </div>
       </div>
     </div>

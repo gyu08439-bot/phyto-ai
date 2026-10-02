@@ -22,6 +22,7 @@ class FloraApp {
     this.initTabBar();
     this.initAddPlantModal();
     this.initLuxPlantPickerModal();
+    this.initSettings();
     this.initPurchases();
 
     // Skip onboarding quiz on app relaunch if completed previously
@@ -37,7 +38,16 @@ class FloraApp {
     try {
       const saved = localStorage.getItem("flora_garden_v4");
       if (saved) {
-        this.myPlants = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Automatic deduplication by unique key
+        const seen = new Set();
+        this.myPlants = parsed.filter(p => {
+          const key = (p.id && !p.id.startsWith("g_")) ? p.id : (p.nickname || p.commonName);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        this.saveGarden();
       } else {
         // Fresh install starts with an empty garden (User requirement)
         this.myPlants = [];
@@ -797,6 +807,98 @@ class FloraApp {
     }
   }
 
+  initSettings() {
+    const openBtn = document.getElementById("btn-open-settings");
+    const modal = document.getElementById("modal-settings");
+    const closeBtn = document.getElementById("btn-close-settings-modal");
+    const proBadge = document.getElementById("settings-pro-badge");
+    const proTier = document.getElementById("settings-pro-tier");
+    const proDesc = document.getElementById("settings-pro-desc");
+    const proActionBtn = document.getElementById("settings-pro-action-btn");
+    const restoreBtn = document.getElementById("btn-settings-restore");
+
+    const updateSettingsProState = () => {
+      const isPro = purchasesManager.isPro;
+      if (isPro) {
+        if (proBadge) {
+          proBadge.textContent = "● ACTIVE SUBSCRIBER";
+          proBadge.style.color = "#00F076";
+        }
+        if (proTier) proTier.textContent = "Flora Pro Unlimited";
+        if (proDesc) proDesc.textContent = "All clinical diagnostic protocols, smart luxmeter, and watering intelligence unlocked.";
+        if (proActionBtn) {
+          proActionBtn.textContent = "Subscribed via Apple StoreKit";
+          proActionBtn.style.background = "rgba(0, 240, 118, 0.2)";
+          proActionBtn.style.color = "#00F076";
+          proActionBtn.onclick = () => {
+            alert("Your Flora Pro subscription is active and managed through your Apple ID settings.");
+          };
+        }
+      } else {
+        if (proBadge) {
+          proBadge.textContent = "FREE TIER";
+          proBadge.style.color = "#FFE600";
+        }
+        if (proTier) proTier.textContent = "Flora Free";
+        if (proDesc) proDesc.textContent = "Unlock unlimited AI plant scans, clinical recovery protocols, and camera luxmeter.";
+        if (proActionBtn) {
+          proActionBtn.textContent = "Upgrade to Flora Pro";
+          proActionBtn.style.background = "#00F076";
+          proActionBtn.style.color = "#000000";
+          proActionBtn.onclick = () => {
+            if (modal) modal.classList.remove("active");
+            this.showPaywall("settings_pro_upgrade");
+          };
+        }
+      }
+    };
+
+    if (openBtn && modal) {
+      openBtn.addEventListener("click", () => {
+        updateSettingsProState();
+        modal.classList.add("active");
+      });
+    }
+
+    if (closeBtn && modal) {
+      closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+    }
+
+    if (restoreBtn) {
+      restoreBtn.addEventListener("click", async () => {
+        const origText = restoreBtn.innerHTML;
+        restoreBtn.innerHTML = `
+          <div class="settings-row-left">
+            <span class="settings-row-icon">⏳</span>
+            <span>Restoring Purchases...</span>
+          </div>
+        `;
+        try {
+          const success = await purchasesManager.restorePurchases();
+          if (success) {
+            updateSettingsProState();
+            this.renderProStatusBadge();
+            restoreBtn.innerHTML = `
+              <div class="settings-row-left">
+                <span class="settings-row-icon">✓</span>
+                <span style="color: #00F076;">Purchases Restored</span>
+              </div>
+            `;
+          } else {
+            alert("No previous Flora Pro subscription found for this Apple ID.");
+            restoreBtn.innerHTML = origText;
+          }
+        } catch (err) {
+          alert("Restore error: " + (err?.message || err));
+          restoreBtn.innerHTML = origText;
+        }
+        setTimeout(() => {
+          restoreBtn.innerHTML = origText;
+        }, 2500);
+      });
+    }
+  }
+
   renderLuxPickerList(modal) {
     const listEl = document.getElementById("lux-picker-list");
     if (!listEl) return;
@@ -1048,26 +1150,44 @@ class FloraApp {
       }
     }
 
+    const inGarden = this.myPlants.some(p => p.id === plant.id || (p.nickname && p.nickname === plant.nickname && p.commonName === plant.commonName));
     const addBtn = document.getElementById("add-to-garden-btn");
     if (addBtn) {
-      addBtn.onclick = () => {
-        const photoToSave = plant.userPhoto || plant.photo || plant.image || this.getPlantPhoto(plant);
-        this.myPlants.unshift({
-          id: `g_${Date.now()}`,
-          nickname: plant.nickname || plant.commonName,
-          commonName: plant.commonName,
-          botanicalName: plant.botanicalName,
-          icon: plant.icon || "🪴",
-          photo: photoToSave,
-          healthScore: plant.healthScore || 75,
-          nextWaterDays: plant.wateringInterval || 7,
-          wateringInterval: plant.wateringInterval || 7,
-          petToxicity: plant.petToxicity
-        });
-        this.saveGarden();
-        this.renderGardenList();
-        this.showScreen("dashboard");
-      };
+      if (inGarden) {
+        addBtn.innerHTML = `<span>💧 Water Now (+5% Vitality)</span>`;
+        addBtn.className = "btn-secondary";
+        addBtn.onclick = () => {
+          const target = this.myPlants.find(p => p.id === plant.id || (p.nickname && p.nickname === plant.nickname && p.commonName === plant.commonName));
+          if (target) {
+            target.nextWaterDays = target.wateringInterval || 7;
+            target.healthScore = Math.min(100, (target.healthScore || 80) + 5);
+            this.saveGarden();
+            this.renderGardenList();
+          }
+          this.showScreen("dashboard");
+        };
+      } else {
+        addBtn.innerHTML = `<span>+ Add to My Garden</span>`;
+        addBtn.className = "btn-primary";
+        addBtn.onclick = () => {
+          const photoToSave = plant.userPhoto || plant.photo || plant.image || this.getPlantPhoto(plant);
+          this.myPlants.unshift({
+            id: `g_${Date.now()}`,
+            nickname: plant.nickname || plant.commonName,
+            commonName: plant.commonName,
+            botanicalName: plant.botanicalName,
+            icon: plant.icon || "🪴",
+            photo: photoToSave,
+            healthScore: plant.healthScore || 75,
+            nextWaterDays: plant.wateringInterval || 7,
+            wateringInterval: plant.wateringInterval || 7,
+            petToxicity: plant.petToxicity
+          });
+          this.saveGarden();
+          this.renderGardenList();
+          this.showScreen("dashboard");
+        };
+      }
     }
 
     this.showScreen("diagnosis");

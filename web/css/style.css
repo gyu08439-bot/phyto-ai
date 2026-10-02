@@ -832,6 +832,26 @@ html, body {
   gap: 10px;
 }
 
+.btn-settings-circle {
+  width: 44px;
+  height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+  color: var(--text-primary);
+  font-size: 19px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-settings-circle:active {
+  transform: scale(0.92);
+  background: var(--surface-hover);
+}
+
 .btn-add-circle {
   width: 44px;
   height: 44px;
@@ -1853,6 +1873,132 @@ html, body {
   object-fit: cover;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Settings Modal & Options */
+.settings-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.settings-version {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: block;
+  margin-top: 2px;
+}
+
+.settings-pro-card {
+  background: linear-gradient(135deg, rgba(0, 240, 118, 0.12) 0%, rgba(20, 20, 24, 0.95) 100%);
+  border: 1px solid rgba(0, 240, 118, 0.35);
+  border-radius: 20px;
+  padding: 18px 16px;
+  margin-bottom: 20px;
+}
+
+.settings-pro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.settings-pro-badge {
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  color: var(--emerald);
+  text-transform: uppercase;
+}
+
+.settings-pro-tier {
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.settings-pro-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.settings-pro-btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--emerald);
+  color: #000000;
+  font-weight: 800;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.settings-row-btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.settings-row-btn:active {
+  background: var(--surface-hover);
+}
+
+.settings-row-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-row-icon {
+  font-size: 18px;
+}
+
+.settings-row-arrow {
+  color: var(--text-muted);
+  font-size: 20px;
+  font-weight: 300;
+}
+
+.settings-footer-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.45;
+  padding: 0 8px;
 }
 
 .lux-plant-chip {
