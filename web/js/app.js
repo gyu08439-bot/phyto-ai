@@ -264,14 +264,14 @@ class FloraApp {
     if (this.selectedPlan === "yearly") {
       if (isTrialEligible) {
         if (ctaBtn) ctaBtn.innerHTML = `<span>Start 3-Day Free Trial</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Auto-renews unless canceled in App Store at least 24h before period ends. 3 days free, then ${yearlyPrice}/yr. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
+        if (trialNote) trialNote.innerHTML = `Auto-renews until canceled in App Store. 3 days free, then ${yearlyPrice}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
       } else {
         if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${yearlyPrice} / yr</span>${arrowSvg}`;
-        if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Auto-renews yearly (${yearlyPrice}/yr) unless canceled in App Store at least 24h before period ends. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
+        if (trialNote) trialNote.innerHTML = `Plans auto-renew yearly until canceled in App Store. ${yearlyPrice}/year. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
       }
     } else {
       if (ctaBtn) ctaBtn.innerHTML = `<span>Subscribe for ${monthlyPrice} / mo</span>${arrowSvg}`;
-      if (trialNote) trialNote.innerHTML = `Payment charged to Apple ID. Auto-renews monthly (${monthlyPrice}/mo) unless canceled in App Store at least 24h before period ends. <a href="terms.html">Terms of Use</a> · <a href="privacy.html">Privacy Policy</a>`;
+      if (trialNote) trialNote.innerHTML = `Plans auto-renew monthly until canceled in App Store. ${monthlyPrice}/month. <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a>`;
     }
   }
 
