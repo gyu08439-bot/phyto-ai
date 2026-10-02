@@ -267,6 +267,15 @@
             <div class="action-content">
               <div class="action-name">2. Optimize Lighting & Air</div>
               <p id="diag-action-light" class="action-desc">Relocate to bright indirect sunlight and improve room ventilation to dry leaf surfaces.</p>
+              <div class="diag-lux-link-card">
+                <div class="diag-lux-req-row">
+                  <span class="diag-lux-req-label">TARGET LUX:</span>
+                  <span class="diag-lux-req-val" id="diag-lux-val-badge">2,500 – 4,500 LUX</span>
+                </div>
+                <button id="btn-diag-luxmeter" class="btn-diag-lux-action" type="button">
+                  <span>⚡ Check Spot with Luxmeter</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -309,6 +318,18 @@
             <h1 class="title-large">Light Meter</h1>
           </div>
         </div>
+      </div>
+
+      <!-- Plant Target Banner (when measuring for specific plant) -->
+      <div id="lux-target-banner" class="lux-target-pill-bar" style="display: none;">
+        <div class="lux-target-left">
+          <span class="lux-target-emoji" id="lux-target-icon">🪴</span>
+          <div>
+            <div class="lux-target-title" id="lux-target-name">Monstera Deliciosa</div>
+            <div class="lux-target-req" id="lux-target-range">Need: 2,500 – 4,500 LUX</div>
+          </div>
+        </div>
+        <button id="lux-clear-target-btn" class="lux-btn-clear" aria-label="Clear target">✕</button>
       </div>
 
       <div class="lux-display-card">

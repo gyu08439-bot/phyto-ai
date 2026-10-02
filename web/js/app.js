@@ -821,6 +821,30 @@ class FloraApp {
     const lightAction = document.getElementById("diag-action-light");
     if (lightAction) lightAction.textContent = rx[1]?.action || "Relocate to bright indirect sunlight and improve room ventilation to dry leaf surfaces.";
 
+    // Wire up Target Lux Badge and Luxmeter Launch Button
+    const luxBadge = document.getElementById("diag-lux-val-badge");
+    const luxReq = plant.lightRequirement || "Bright Indirect (2,500 – 4,500 LUX)";
+    if (luxBadge) {
+      luxBadge.textContent = luxReq;
+    }
+
+    const btnDiagLux = document.getElementById("btn-diag-luxmeter");
+    if (btnDiagLux) {
+      btnDiagLux.onclick = () => {
+        if (!purchasesManager.isPro) {
+          this.showPaywall("diagnosis_luxmeter_button");
+          return;
+        }
+        if (this.lightMeter) {
+          this.lightMeter.setTargetPlant(plant);
+        }
+        this.switchScreen("luxmeter");
+        if (this.lightMeter && !this.lightMeter.active) {
+          this.lightMeter.start();
+        }
+      };
+    }
+
     const treatmentAction = document.getElementById("diag-action-treatment");
     const treatmentBlock = document.getElementById("diag-step-treatment");
     const lockedBanner = document.getElementById("diag-pro-locked-banner");

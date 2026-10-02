@@ -10,6 +10,14 @@ export class LightMeter {
     this.recommendationsContainer = document.getElementById('lux-recommended-plants');
     this.startBtn = document.getElementById('lux-start-btn');
     
+    // Target Plant Elements
+    this.targetBanner = document.getElementById('lux-target-banner');
+    this.targetIcon = document.getElementById('lux-target-icon');
+    this.targetName = document.getElementById('lux-target-name');
+    this.targetRange = document.getElementById('lux-target-range');
+    this.clearTargetBtn = document.getElementById('lux-clear-target-btn');
+    this.targetPlant = null;
+    
     this.stream = null;
     this.animFrame = null;
     this.canvas = document.createElement('canvas');
@@ -31,6 +39,59 @@ export class LightMeter {
           this.start();
         }
       });
+    }
+
+    if (this.clearTargetBtn) {
+      this.clearTargetBtn.addEventListener('click', () => {
+        this.clearTargetPlant();
+      });
+    }
+  }
+
+  setTargetPlant(plant) {
+    if (!plant) return;
+    const name = plant.commonName || plant.nickname || plant.name || "Plant";
+    const icon = plant.icon || "🪴";
+    const reqStr = plant.lightRequirement || "Bright Indirect (2,500 - 4,500 Lux)";
+    
+    let minLux = 2000;
+    let maxLux = 5000;
+    const numbers = reqStr.replace(/,/g, '').match(/\d+/g);
+    if (numbers && numbers.length >= 2) {
+      minLux = parseInt(numbers[0], 10);
+      maxLux = parseInt(numbers[1], 10);
+    } else if (numbers && numbers.length === 1) {
+      minLux = parseInt(numbers[0], 10);
+      maxLux = minLux * 2;
+    }
+
+    this.targetPlant = {
+      name,
+      icon,
+      requirementStr: reqStr,
+      minLux,
+      maxLux
+    };
+
+    if (this.targetBanner) {
+      this.targetBanner.style.display = 'flex';
+    }
+    if (this.targetIcon) this.targetIcon.textContent = icon;
+    if (this.targetName) this.targetName.textContent = name;
+    if (this.targetRange) this.targetRange.textContent = `Need: ${minLux.toLocaleString()} – ${maxLux.toLocaleString()} LUX`;
+    
+    if (this.currentLux > 0) {
+      this.updateUI(Math.round(this.currentLux));
+    }
+  }
+
+  clearTargetPlant() {
+    this.targetPlant = null;
+    if (this.targetBanner) {
+      this.targetBanner.style.display = 'none';
+    }
+    if (this.currentLux > 0) {
+      this.updateUI(Math.round(this.currentLux));
     }
   }
 
@@ -127,33 +188,57 @@ export class LightMeter {
     let filterCategory = 'bright';
     let progressPct = Math.min(100, (lux / 8000) * 100);
 
-    if (lux < 600) {
-      zoneTitle = 'Deep Shade / Low Light';
-      zoneDesc = 'Dim corner or windowless room. Only resilient low-light species survive here.';
-      zoneColor = '#60A5FA';
-      filterCategory = 'low';
-    } else if (lux < 2200) {
-      zoneTitle = 'Medium Filtered Light';
-      zoneDesc = 'Soft ambient glow. Good for understory jungle plants and trailing vines.';
-      zoneColor = '#FBBF24';
-      filterCategory = 'medium';
-    } else if (lux < 6000) {
-      zoneTitle = 'Bright Indirect (Optimal)';
-      zoneDesc = 'Perfect plant zone. 1-2 meters from East/South window with sheer curtains.';
-      zoneColor = '#00F076';
-      filterCategory = 'bright';
+    // If target plant is selected, provide dedicated plant diagnosis:
+    if (this.targetPlant) {
+      const { name, minLux, maxLux } = this.targetPlant;
+      progressPct = Math.min(100, (lux / (maxLux * 1.4)) * 100);
+
+      if (lux < minLux) {
+        const deficit = minLux - lux;
+        zoneTitle = `Too Dim for ${name} (-${deficit.toLocaleString()} LUX)`;
+        zoneDesc = `Current illumination is below the threshold for ${name}. Leaves will pale and growth will stall. Move 1 meter closer to window.`;
+        zoneColor = '#60A5FA';
+        filterCategory = 'low';
+      } else if (lux > maxLux * 1.25) {
+        zoneTitle = `⚠️ Too Harsh for ${name} (Burn Risk)`;
+        zoneDesc = `Intense direct sunlight exceeds safe threshold for ${name}. Tender leaf cells may scorch. Filter with sheer curtain.`;
+        zoneColor = '#EF4444';
+        filterCategory = 'direct';
+      } else {
+        zoneTitle = `✓ Ideal Spot for ${name}!`;
+        zoneDesc = `Spot-on photosynthetic radiation. Perfectly matched for ${name}'s chlorophyll requirements.`;
+        zoneColor = '#00F076';
+        filterCategory = 'bright';
+      }
     } else {
-      zoneTitle = 'Direct Scorching Sunlight';
-      zoneDesc = 'Full sun. Risk of chlorophyll burn for delicate aroids. Ideal for succulents.';
-      zoneColor = '#EF4444';
-      filterCategory = 'direct';
+      if (lux < 600) {
+        zoneTitle = 'Deep Shade / Low Light';
+        zoneDesc = 'Dim corner or windowless room. Only resilient low-light species survive here.';
+        zoneColor = '#60A5FA';
+        filterCategory = 'low';
+      } else if (lux < 2200) {
+        zoneTitle = 'Medium Filtered Light';
+        zoneDesc = 'Soft ambient glow. Good for understory jungle plants and trailing vines.';
+        zoneColor = '#FBBF24';
+        filterCategory = 'medium';
+      } else if (lux < 6000) {
+        zoneTitle = 'Bright Indirect (Optimal)';
+        zoneDesc = 'Perfect plant zone. 1-2 meters from East/South window with sheer curtains.';
+        zoneColor = '#00F076';
+        filterCategory = 'bright';
+      } else {
+        zoneTitle = 'Direct Scorching Sunlight';
+        zoneDesc = 'Full sun. Risk of chlorophyll burn for delicate aroids. Ideal for succulents.';
+        zoneColor = '#EF4444';
+        filterCategory = 'direct';
+      }
     }
 
     if (this.zoneBadge) {
       this.zoneBadge.textContent = zoneTitle;
       this.zoneBadge.style.color = zoneColor;
       this.zoneBadge.style.borderColor = `${zoneColor}44`;
-      this.zoneBadge.style.background = `${zoneColor}15`;
+      this.zoneBadge.style.background = `${zoneColor}18`;
     }
 
     if (this.zoneDesc) {
@@ -167,6 +252,7 @@ export class LightMeter {
 
     this.renderRecommendations(filterCategory);
   }
+
 
   renderRecommendations(category) {
     if (!this.recommendationsContainer) return;
