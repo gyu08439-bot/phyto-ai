@@ -216,13 +216,22 @@
       </div>
 
       <div class="diag-container">
-        <!-- Big Hero Plant Header -->
+        <!-- Big Hero Plant Header with Leaf Photo -->
         <div class="diag-hero-card">
-          <div class="diag-hero-badge">
-            <span class="diag-hero-dot" id="diag-status-dot"></span>
-            <span id="diag-status-badge">Requires Care</span>
+          <div class="diag-hero-main-row">
+            <div class="diag-hero-text-col">
+              <div class="diag-hero-badge">
+                <span class="diag-hero-dot" id="diag-status-dot"></span>
+                <span id="diag-status-badge">Requires Care</span>
+              </div>
+              <h1 id="diag-plant-name" class="diag-hero-title">Monstera Deliciosa</h1>
+              <div class="diag-hero-botanical" id="diag-plant-botanical">Monstera deliciosa</div>
+            </div>
+            <div class="diag-hero-photo-wrap">
+              <img id="diag-hero-photo" src="assets/plants/monstera.jpg" alt="Analyzed Plant" class="diag-hero-photo">
+              <span class="diag-photo-tag" id="diag-photo-tag">SAMPLE</span>
+            </div>
           </div>
-          <h1 id="diag-plant-name" class="diag-hero-title">Monstera Deliciosa</h1>
           <div class="diag-hero-score">
             <span class="score-num" id="diag-health-number">72%</span>
             <span class="score-label">Health Index</span>
@@ -375,7 +384,12 @@
           <input type="text" id="add-plant-nickname" class="input-large" placeholder="e.g. Sunny Monstera">
 
           <label class="field-label" style="margin-top: 16px;">Select Species</label>
-          <select id="add-plant-species" class="select-large"></select>
+          <div class="add-species-selector-row">
+            <div class="add-plant-preview-avatar">
+              <img id="add-plant-preview-img" src="assets/plants/monstera.jpg" alt="Species Preview" class="add-plant-preview-thumb">
+            </div>
+            <select id="add-plant-species" class="select-large" style="flex: 1;"></select>
+          </div>
 
           <button id="btn-save-new-plant" class="btn-primary" style="margin-top: 24px;">
             <span>Save Plant</span>

@@ -124,6 +124,15 @@ export class PlantScanner {
     // Turn on laser sweep (pure visual animation, NO words)
     if (this.laser) this.laser.style.display = "block";
 
+    let thumbnail = null;
+    if (imageDataUrl) {
+      try {
+        thumbnail = await this.generateThumbnail(imageDataUrl, 320);
+      } catch (err) {
+        console.warn("Thumbnail generation note:", err);
+      }
+    }
+
     let diagnosisResult = null;
     if (imageDataUrl) {
       try {
@@ -148,6 +157,11 @@ export class PlantScanner {
       };
     }
 
+    // Attach user photo thumbnail to diagnosis result
+    if (diagnosisResult && thumbnail) {
+      diagnosisResult.userPhoto = thumbnail;
+    }
+
     // Exact 1.5s scanning laser duration for high perceived-value AI sweep
     setTimeout(() => {
       if (this.laser) this.laser.style.display = "none";
@@ -156,18 +170,51 @@ export class PlantScanner {
     }, 1500);
   }
 
+  generateThumbnail(dataUrl, maxDim = 320) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width;
+        let h = img.height;
+        if (w > h) {
+          if (w > maxDim) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          }
+        } else {
+          if (h > maxDim) {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
   runPresetScan(presetId) {
     if (this.isScanning) return;
     this.isScanning = true;
 
     if (this.laser) this.laser.style.display = "block";
     const match = PLANT_DATABASE.find(p => p.id === presetId) || PLANT_DATABASE[0];
+    const res = {
+      ...match,
+      userPhoto: match.image || `assets/plants/${match.id}.jpg`
+    };
 
     // Silent laser scan without any text or words underneath
     setTimeout(() => {
       if (this.laser) this.laser.style.display = "none";
       this.isScanning = false;
-      this.onDiagnosisReady(match);
+      this.onDiagnosisReady(res);
     }, 1500);
   }
 }

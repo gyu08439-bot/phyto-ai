@@ -611,9 +611,12 @@ class FloraApp {
 
       const isUrgent = plant.nextWaterDays <= 1;
       const waterLabel = isUrgent ? "💧 Water" : `💧 In ${plant.nextWaterDays}d`;
+      const photoSrc = this.getPlantPhoto(plant);
 
       el.innerHTML = `
-        <div class="plant-item-avatar">${plant.icon || "🪴"}</div>
+        <div class="plant-item-avatar">
+          ${photoSrc ? `<img src="${photoSrc}" class="plant-item-photo" alt="${plant.commonName || 'Plant'}">` : (plant.icon || "🪴")}
+        </div>
         <div class="plant-item-info">
           <div class="plant-item-title">${plant.nickname || plant.commonName}</div>
           <div class="plant-item-sub">${plant.commonName} • ${plant.healthScore || 85}% Vitality</div>
@@ -677,17 +680,57 @@ class FloraApp {
     }, 600);
   }
 
+  getPlantPhoto(plant) {
+    if (!plant) return "assets/plants/monstera.jpg";
+    if (plant.userPhoto) return plant.userPhoto;
+    if (plant.photo) return plant.photo;
+    if (plant.image) return plant.image;
+
+    // Check by species ID in PLANT_DATABASE
+    if (plant.id && !plant.id.startsWith("g_")) {
+      const match = PLANT_DATABASE.find(p => p.id === plant.id);
+      if (match && match.image) return match.image;
+    }
+
+    // Smart auto-match by name
+    const text = ((plant.nickname || "") + " " + (plant.commonName || "") + " " + (plant.botanicalName || "")).toLowerCase();
+    if (text.includes("bromeliad")) return "assets/plants/bromeliad.jpg";
+    if (text.includes("spider") || text.includes("chlorophytum")) return "assets/plants/spider_plant.jpg";
+    if (text.includes("rubber") || text.includes("ficus") || text.includes("elastica")) return "assets/plants/ficus_elastica.jpg";
+    if (text.includes("snake") || text.includes("sansevieria") || text.includes("dracaena")) return "assets/plants/snake_plant.jpg";
+    if (text.includes("calathea") || text.includes("goeppertia")) return "assets/plants/calathea_orbifolia.jpg";
+    if (text.includes("zz") || text.includes("zamioculcas")) return "assets/plants/zz_plant.jpg";
+    if (text.includes("pothos") || text.includes("epipremnum")) return "assets/plants/pothos_golden.jpg";
+    if (text.includes("fern") || text.includes("nephrolepis")) return "assets/plants/boston_fern.jpg";
+    if (text.includes("lily") || text.includes("peace") || text.includes("spathiphyllum")) return "assets/plants/peace_lily.jpg";
+    if (text.includes("money") || text.includes("pachira")) return "assets/plants/money_tree.jpg";
+    if (text.includes("monstera")) return "assets/plants/monstera.jpg";
+
+    return "assets/plants/monstera.jpg";
+  }
+
   initAddPlantModal() {
     const openBtn = document.getElementById("btn-open-add-plant");
     const modal = document.getElementById("modal-add-plant");
     const closeBtn = document.getElementById("btn-close-add-modal");
     const saveBtn = document.getElementById("btn-save-new-plant");
     const speciesSelect = document.getElementById("add-plant-species");
+    const previewImg = document.getElementById("add-plant-preview-img");
+
+    const updatePreview = () => {
+      const spId = speciesSelect?.value;
+      const sp = PLANT_DATABASE.find(p => p.id === spId) || PLANT_DATABASE[0];
+      if (previewImg && sp) {
+        previewImg.src = sp.image || `assets/plants/${sp.id}.jpg`;
+      }
+    };
 
     if (speciesSelect) {
       speciesSelect.innerHTML = PLANT_DATABASE.map(p => `
         <option value="${p.id}">${p.icon} ${p.commonName}</option>
       `).join("");
+      speciesSelect.addEventListener("change", updatePreview);
+      updatePreview();
     }
 
     if (openBtn && modal) {
@@ -697,6 +740,7 @@ class FloraApp {
           return;
         }
         modal.classList.add("active");
+        updatePreview();
       });
     }
 
@@ -716,6 +760,7 @@ class FloraApp {
           commonName: selectedBase.commonName,
           botanicalName: selectedBase.botanicalName,
           icon: selectedBase.icon,
+          photo: selectedBase.image || `assets/plants/${selectedBase.id}.jpg`,
           healthScore: 92,
           nextWaterDays: selectedBase.wateringInterval,
           wateringInterval: selectedBase.wateringInterval,
@@ -767,9 +812,10 @@ class FloraApp {
       this.myPlants.forEach(p => {
         const item = document.createElement("div");
         item.className = "lux-picker-item";
+        const thumb = this.getPlantPhoto(p);
         item.innerHTML = `
           <div class="lux-picker-item-left">
-            <span class="lux-picker-item-icon">${p.icon || "🪴"}</span>
+            <img src="${thumb}" class="lux-picker-thumb" alt="${p.commonName}">
             <div>
               <div class="lux-picker-item-name">${p.nickname || p.commonName}</div>
               <div class="lux-picker-item-sub">${p.botanicalName || p.commonName}</div>
@@ -801,7 +847,7 @@ class FloraApp {
       item.className = "lux-picker-item";
       item.innerHTML = `
         <div class="lux-picker-item-left">
-          <span class="lux-picker-item-icon">${p.icon}</span>
+          <img src="${p.image || 'assets/plants/monstera.jpg'}" class="lux-picker-thumb" alt="${p.commonName}">
           <div>
             <div class="lux-picker-item-name">${p.commonName}</div>
             <div class="lux-picker-item-sub">${p.botanicalName}</div>
@@ -827,7 +873,20 @@ class FloraApp {
     this.lastDiagnosedPlant = plant;
 
     const nameEl = document.getElementById("diag-plant-name");
-    if (nameEl) nameEl.textContent = plant.commonName || "Monstera Deliciosa";
+    if (nameEl) nameEl.textContent = plant.nickname || plant.commonName || "Monstera Deliciosa";
+
+    const botanicalEl = document.getElementById("diag-plant-botanical");
+    if (botanicalEl) botanicalEl.textContent = plant.botanicalName || plant.commonName || "Monstera deliciosa";
+
+    const photoSrc = this.getPlantPhoto(plant);
+    const heroPhotoEl = document.getElementById("diag-hero-photo");
+    const photoTagEl = document.getElementById("diag-photo-tag");
+    if (heroPhotoEl) {
+      heroPhotoEl.src = photoSrc;
+    }
+    if (photoTagEl) {
+      photoTagEl.textContent = plant.userPhoto ? "LIVE SCAN" : "SPECIMEN";
+    }
 
     const score = plant.healthScore || 72;
     const healthNumEl = document.getElementById("diag-health-number");
@@ -989,12 +1048,14 @@ class FloraApp {
     const addBtn = document.getElementById("add-to-garden-btn");
     if (addBtn) {
       addBtn.onclick = () => {
+        const photoToSave = plant.userPhoto || plant.photo || plant.image || this.getPlantPhoto(plant);
         this.myPlants.unshift({
           id: `g_${Date.now()}`,
-          nickname: plant.commonName,
+          nickname: plant.nickname || plant.commonName,
           commonName: plant.commonName,
           botanicalName: plant.botanicalName,
           icon: plant.icon || "🪴",
+          photo: photoToSave,
           healthScore: plant.healthScore || 75,
           nextWaterDays: plant.wateringInterval || 7,
           wateringInterval: plant.wateringInterval || 7,

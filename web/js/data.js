@@ -55,6 +55,7 @@ export const PLANT_DATABASE = [
     condition: "Early Leaf Rust (Puccinia)",
     severity: "Moderate",
     icon: "🪴",
+    image: "assets/plants/monstera.jpg",
     cause: "High localized foliage moisture combined with stagnant indoor air circulation favored fungal spore propagation.",
     rx: [
       { step: "Prune Infected Foliage", action: "Sterilize shears with 70% alcohol and prune the two most damaged lower leaves." },
@@ -77,6 +78,7 @@ export const PLANT_DATABASE = [
     condition: "Chlorosis & Iron Deficiency",
     severity: "Mild",
     icon: "🌳",
+    image: "assets/plants/ficus_elastica.jpg",
     cause: "Alkaline tap water raised substrate pH above 7.0, locking micronutrient absorption in active leaf veins.",
     rx: [
       { step: "Acidify & Flush Substrate", action: "Flush potting mix with filtered water acidified with lemon drops to pH 6.0." },
@@ -99,6 +101,7 @@ export const PLANT_DATABASE = [
     condition: "Mild Edema (Over-Hydration)",
     severity: "Low",
     icon: "🗡️",
+    image: "assets/plants/snake_plant.jpg",
     cause: "Cells took up water faster than transpiration rate due to cold indoor temperatures during the night.",
     rx: [
       { step: "Cease Irrigation for 14 Days", action: "Allow root ball to become bone-dry throughout the entire pot depth." },
@@ -121,6 +124,7 @@ export const PLANT_DATABASE = [
     condition: "Spider Mite Infestation (Tetranychidae)",
     severity: "High",
     icon: "🌿",
+    image: "assets/plants/calathea_orbifolia.jpg",
     cause: "Dry winter indoor air (relative humidity below 35%) triggered exponential two-spotted spider mite colony reproduction.",
     rx: [
       { step: "Immediate Lukewarm Shower", action: "Rinse undersides of all foliage with 22°C shower spray to dislodge webs." },
@@ -143,6 +147,7 @@ export const PLANT_DATABASE = [
     condition: "Vigorous Prime Growth",
     severity: "None",
     icon: "🌱",
+    image: "assets/plants/zz_plant.jpg",
     cause: "Optimal drought-stress balance mimicking native Eastern African seasonal climate.",
     rx: [
       { step: "Maintain Dry Cycle", action: "Water only when rhizome storage tubers have absorbed available moisture." },
@@ -164,6 +169,7 @@ export const PLANT_DATABASE = [
     condition: "Healthy Trailing State",
     severity: "None",
     icon: "🍃",
+    image: "assets/plants/pothos_golden.jpg",
     cause: "Consistent moisture and indirect light.",
     rx: [
       { step: "Prune Vine Tips", action: "Snip leggy vine ends to stimulate bushy node branching." },
@@ -185,6 +191,7 @@ export const PLANT_DATABASE = [
     condition: "Crispy Frond Margins",
     severity: "Low",
     icon: "🌿",
+    image: "assets/plants/boston_fern.jpg",
     cause: "Low ambient humidity and direct afternoon sunlight scorching delicate pinnae.",
     rx: [
       { step: "Trim Brown Fronds", action: "Snip completely dried fronds at the soil crown." },
@@ -206,6 +213,7 @@ export const PLANT_DATABASE = [
     condition: "Flourishing with Plantlets",
     severity: "None",
     icon: "🌾",
+    image: "assets/plants/spider_plant.jpg",
     cause: "Balanced root-bound environment encouraging stolon flower shoots.",
     rx: [
       { step: "Propagate Spiderettes", action: "Cut mature baby plantlets with aerial roots and root in clean water." },
@@ -227,6 +235,7 @@ export const PLANT_DATABASE = [
     condition: "Drooping & Dehydration",
     severity: "Mild",
     icon: "🕊️",
+    image: "assets/plants/peace_lily.jpg",
     cause: "Root transpiration exceeded available substrate moisture, causing loss of turgor pressure.",
     rx: [
       { step: "Bottom Soak 20 Min", action: "Place pot in basin of room-temperature water for 20 minutes to re-hydrate." },
@@ -248,6 +257,7 @@ export const PLANT_DATABASE = [
     condition: "Healthy Braided Canopy",
     severity: "None",
     icon: "🌴",
+    image: "assets/plants/money_tree.jpg",
     cause: "Stable indirect light and moderate deep watering cadence.",
     rx: [
       { step: "Check Trunk Tape", action: "Verify nursery rubber bands or tape under soil are removed so trunks don't strangle." },
@@ -258,5 +268,27 @@ export const PLANT_DATABASE = [
     lightRequirement: "Medium to Bright Indirect (1,800 - 4,000 Lux)",
     careLevel: "Easy",
     description: "Braided ornamental trunk with vibrant palmate green leaves. Symbol of prosperity and clean air."
+  },
+  {
+    isPlant: true,
+    id: "bromeliad",
+    commonName: "Bromeliad",
+    botanicalName: "Guzmania lingulata",
+    category: "Bromeliaceae",
+    defaultHealth: 94,
+    condition: "Prime Tropical Bloom",
+    severity: "None",
+    icon: "🌺",
+    image: "assets/plants/bromeliad.jpg",
+    cause: "Consistent central rosette hydration and warm indirect ambient light.",
+    rx: [
+      { step: "Central Rosette Hydration", action: "Fill the central cup with filtered room-temperature water weekly." },
+      { step: "Flush Rosette Monthly", action: "Rinse central cup with fresh water to prevent salt and algae buildup." }
+    ],
+    petToxicity: { isToxic: false, notes: "100% Non-Toxic & Pet-Safe for cats and dogs!" },
+    wateringInterval: 7,
+    lightRequirement: "Medium to Bright Indirect (1,500 - 3,500 Lux)",
+    careLevel: "Easy",
+    description: "Vibrant exotic rosette flower with architectural foliage. Resilient, safe for pets and easy to maintain."
   }
 ];
