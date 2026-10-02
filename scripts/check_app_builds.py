@@ -67,23 +67,37 @@ def api_post(url, data):
         return 500, {"error": str(e)}
 
 print(f"=== CHECKING BUILDS FOR APP ID {APP_ID} ===")
-status, res = api_get(f"https://api.appstoreconnect.apple.com/v1/builds?filter[app]={APP_ID}&limit=10")
-print(f"HTTP Status: {status}")
+max_attempts = 18
 valid_builds = []
-if status == 200:
-    data = res.get("data", [])
-    print(f"Total builds found: {len(data)}")
-    for b in data:
-        bid = b.get("id")
-        attr = b.get("attributes", {})
-        version = attr.get("version")
-        state = attr.get("processingState")
-        uploaded = attr.get("uploadedDate")
-        print(f"  - Build: ID={bid}, Version/Build={version}, State={state}, Uploaded={uploaded}")
-        if state == "VALID":
-            valid_builds.append(b)
-else:
-    print("Error querying builds:", res)
+
+for attempt in range(max_attempts):
+    status, res = api_get(f"https://api.appstoreconnect.apple.com/v1/builds?filter[app]={APP_ID}&limit=10")
+    if status == 200:
+        data = res.get("data", [])
+        has_processing = False
+        valid_builds = []
+        for b in data:
+            bid = b.get("id")
+            attr = b.get("attributes", {})
+            version = attr.get("version")
+            state = attr.get("processingState")
+            uploaded = attr.get("uploadedDate")
+            print(f"  - Build: ID={bid}, Version/Build={version}, State={state}, Uploaded={uploaded}")
+            if state == "PROCESSING":
+                has_processing = True
+            elif state == "VALID":
+                valid_builds.append(b)
+
+        if not has_processing and len(valid_builds) > 0:
+            print(f"\n✓ All latest builds processed by Apple! Total valid builds: {len(valid_builds)}")
+            break
+        elif has_processing:
+            print(f"\n⏳ Latest build is still PROCESSING by Apple. Waiting 25s (attempt {attempt+1}/{max_attempts})...")
+            time.sleep(25)
+    else:
+        print("Error querying builds:", res)
+        time.sleep(15)
+
 
 print("\n=== CHECKING PRERELEASE VERSIONS ===")
 status, res = api_get(f"https://api.appstoreconnect.apple.com/v1/apps/{APP_ID}/preReleaseVersions")
