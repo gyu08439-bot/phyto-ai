@@ -48,6 +48,40 @@ class FloraApp {
     } else {
       this.showScreen("quiz");
     }
+
+    // Launch logo splash animation
+    this.initSplashScreen();
+  }
+
+  initSplashScreen() {
+    const splash = document.getElementById("app-splash");
+    if (!splash) return;
+
+    // Minimum display time for elegant branding animation (1.1s)
+    const minSplashDuration = 1100;
+    const startTime = Date.now();
+
+    const dismissSplash = () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, minSplashDuration - elapsed);
+
+      setTimeout(() => {
+        splash.classList.add("splash-hidden");
+        // Remove from DOM after fade transition completes
+        setTimeout(() => {
+          if (splash && splash.parentNode) {
+            splash.parentNode.removeChild(splash);
+          }
+        }, 550);
+      }, remaining);
+    };
+
+    if (document.readyState === "complete") {
+      dismissSplash();
+    } else {
+      window.addEventListener("load", dismissSplash);
+      setTimeout(dismissSplash, 1500);
+    }
   }
 
   loadGarden() {
@@ -873,11 +907,12 @@ class FloraApp {
         if (proTier) proTier.textContent = "Flora Pro Unlimited";
         if (proDesc) proDesc.textContent = "All clinical diagnostic protocols, smart luxmeter, and watering intelligence unlocked.";
         if (proActionBtn) {
-          proActionBtn.textContent = "Subscribed via Apple StoreKit";
-          proActionBtn.style.background = "rgba(0, 240, 118, 0.2)";
+          proActionBtn.textContent = "Manage Subscription ↗";
+          proActionBtn.style.background = "rgba(0, 240, 118, 0.15)";
           proActionBtn.style.color = "#00F076";
+          proActionBtn.style.border = "1px solid rgba(0, 240, 118, 0.35)";
           proActionBtn.onclick = () => {
-            alert("Your Flora Pro subscription is active and managed through your Apple ID settings.");
+            window.open("https://apps.apple.com/account/subscriptions", "_blank");
           };
         }
       } else {
@@ -891,6 +926,7 @@ class FloraApp {
           proActionBtn.textContent = "Upgrade to Flora Pro";
           proActionBtn.style.background = "#00F076";
           proActionBtn.style.color = "#000000";
+          proActionBtn.style.border = "none";
           proActionBtn.onclick = () => {
             if (modal) modal.classList.remove("active");
             this.showPaywall("settings_pro_upgrade");

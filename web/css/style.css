@@ -2521,4 +2521,161 @@ html, body {
   line-height: 1.35;
 }
 
+/* ==========================================================================
+   NATIVE APP LAUNCH SPLASH SCREEN (Apple Elite Standard)
+   ========================================================================== */
+.app-splash-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999999;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+  pointer-events: auto;
+}
+
+.app-splash-screen.splash-hidden {
+  opacity: 0;
+  transform: scale(1.05);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.splash-icon-box {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-glow-aura {
+  position: absolute;
+  inset: -22px;
+  background: radial-gradient(circle, rgba(0, 240, 118, 0.45) 0%, rgba(0, 240, 118, 0.12) 48%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  filter: blur(14px);
+  animation: splashAuraBreath 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  pointer-events: none;
+}
+
+.splash-logo {
+  position: relative;
+  z-index: 2;
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  box-shadow: 0 14px 40px rgba(0, 240, 118, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  animation: splashLogoEntrance 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.splash-brand-title {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: 2px;
+  color: #FFFFFF;
+  margin-bottom: 4px;
+  animation: splashFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+.splash-brand-accent {
+  color: #00F076;
+}
+
+.splash-brand-subtitle {
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 2.8px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 28px;
+  animation: splashFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+.splash-progress-track {
+  width: 64px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  animation: splashFadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+}
+
+.splash-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00F076, #80FFA8);
+  border-radius: 999px;
+  box-shadow: 0 0 8px #00F076;
+  animation: splashProgressFill 1s cubic-bezier(0.65, 0, 0.35, 1) 0.1s forwards;
+}
+
+@keyframes splashLogoEntrance {
+  0% {
+    transform: scale(0.65) translateY(12px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes splashAuraBreath {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0.95;
+  }
+}
+
+@keyframes splashFadeUp {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes splashProgressFill {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+
 
